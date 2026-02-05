@@ -13,10 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileText, Users, ShoppingCart, Activity, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { pdsApi, type PdsData } from "@/lib/api/pds";
 import { toast } from "sonner";
+import TallyCard from "@/components/reusable/tally-card";
+
 
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -74,40 +76,43 @@ function AdminDashboard({
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Users</CardTitle>
-            <CardDescription>Registered accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{users?.length || 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Users</CardTitle>
-            <CardDescription>Currently active</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">
-              {users?.filter((u) => u.isActive).length || 0}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Admins</CardTitle>
-            <CardDescription>Administrator accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">
-              {users?.filter((u) => u.role === "ADMIN").length || 0}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <TallyCard
+          icon={Users}
+          title="Total Users"
+          value={users?.length.toString() || "0"}
+          change="12% from last month"
+          changeType="increase"
+          iconColor="text-white"
+          iconBgColor="bg-emerald-500"
+        />
+        <TallyCard
+          icon={ShoppingCart}
+          title="Active Users"
+          value={users?.filter((u) => u.isActive).length.toString() || "0"}
+          change="8% from last month"
+          changeType="increase"
+          iconColor="text-white"
+          iconBgColor="bg-blue-500"
+        />
+        <TallyCard
+          icon={Activity}
+          title="Admins"
+          value={users?.filter((u) => u.role === "ADMIN").length.toString() || "0"}
+          change="2 new this week"
+          changeType="neutral"
+          iconColor="text-white"
+          iconBgColor="bg-purple-500"
+        />
+        <TallyCard
+          icon={AlertTriangle}
+          title="Pending"
+          value="3"
+          change="Needs attention"
+          changeType="decrease"
+          iconColor="text-white"
+          iconBgColor="bg-amber-500"
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">

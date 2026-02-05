@@ -3,10 +3,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { CreatePdsDto } from './dto/create-pds.dto';
 import { UpdatePdsDto } from './dto/update-pds.dto';
 import { PDFService } from './pdf.service';
-import {
-  populateTeacherProfile,
-  populateEmployeeProfile,
-} from '@/lib/helpers/pds-extractors';
+import { populateSchoolPersonnelProfile, populateStaffProfile } from '@/lib/helpers/pds-extractors';
 
 @Injectable()
 export class PdsService {
@@ -104,19 +101,24 @@ export class PdsService {
   /**
    * Auto-populate profile based on account role
    */
-  private async autoPopulateProfile(
-    accountId: string,
-    role: string,
-    pdsDto: CreatePdsDto,
-  ) {
+  private async autoPopulateProfile(accountId: string, role: string, pdsDto: CreatePdsDto) {
     try {
-      if (role === 'TEACHER') {
-        await populateTeacherProfile(this.prisma, accountId, {
+      if (role === 'SCHOOL_PERSONNEL') {
+        await populateSchoolPersonnelProfile(this.prisma, accountId, {
           personalData: pdsDto.personalData,
           civilServiceData: pdsDto.civilServiceData,
         });
-      } else if (['ADMIN', 'HR', 'EMPLOYEE'].includes(role)) {
-        await populateEmployeeProfile(this.prisma, accountId, {
+      } else if (
+        [
+          'ADMIN',
+          'HR_ASSOCIATE',
+          'HR_HEAD',
+          'APPROVING_AUTHORITY',
+          'EMPLOYEE',
+          'UNIT_HEAD',
+        ].includes(role)
+      ) {
+        await populateStaffProfile(this.prisma, accountId, {
           personalData: pdsDto.personalData,
         });
       }
@@ -147,15 +149,19 @@ export class PdsService {
             id: true,
             email: true,
             role: true,
-            employeeProfile: {
-              select: {
-                firstName: true,
-                lastName: true,
+            staffProfile: {
+              include: {
+                staffData: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
               },
             },
-            teacherProfile: {
+            schoolPersonnelProfile: {
               select: {
-                teacherData: {
+                schoolPersonnelData: {
                   select: {
                     firstName: true,
                     lastName: true,

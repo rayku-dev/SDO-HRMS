@@ -42,9 +42,10 @@ export default function Files201Page() {
   const { data: stats } = useSWR("/files201/stats", files201Api.getStats);
 
   const handleUpload = useCallback(
-    async (file: File, category?: string, description?: string) => {
+    async (file: File, categoryId: string, description?: string) => {
       try {
-        await files201Api.upload(file, category, description);
+        // Pass categoryId as the 5th argument, category string (legacy) as undefined
+        await files201Api.upload(file, undefined, description, undefined, categoryId);
         toast.success("File uploaded successfully");
         mutate();
         setIsUploadOpen(false);
@@ -187,7 +188,7 @@ export default function Files201Page() {
                   {files.map((file) => (
                     <TableRow key={file.id}>
                       <TableCell className="font-medium">{file.fileName}</TableCell>
-                      <TableCell>{file.category || "Uncategorized"}</TableCell>
+                      <TableCell>{file.category || (file as any).fileCategory?.name || "Uncategorized"}</TableCell>
                       <TableCell>{formatFileSize(file.fileSize)}</TableCell>
                       <TableCell>
                         {new Date(file.uploadedAt).toLocaleDateString()}
@@ -219,7 +220,7 @@ export default function Files201Page() {
               <Card key={file.id}>
                 <CardHeader>
                   <CardTitle className="text-sm truncate">{file.fileName}</CardTitle>
-                  <CardDescription>{file.category || "Uncategorized"}</CardDescription>
+                  <CardDescription>{file.category || (file as any).fileCategory?.name || "Uncategorized"}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -256,18 +257,20 @@ export default function Files201Page() {
 function UploadForm({
   onUpload,
 }: {
-  onUpload: (file: File, category?: string, description?: string) => void;
+  onUpload: (file: File, categoryId: string, description?: string) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [category, setCategory] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+
+  const { data: categories } = useSWR("/files201/categories", files201Api.getCategories);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (file) {
-      onUpload(file, category || undefined, description || undefined);
+    if (file && categoryId) {
+      onUpload(file, categoryId, description || undefined);
       setFile(null);
-      setCategory("");
+      setCategoryId("");
       setDescription("");
     }
   };
@@ -284,17 +287,17 @@ function UploadForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="category">Category (optional)</Label>
-        <Select value={category} onValueChange={setCategory}>
+        <Label htmlFor="category">Category</Label>
+        <Select value={categoryId} onValueChange={setCategoryId} required>
           <SelectTrigger>
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="certificates">Certificates</SelectItem>
-            <SelectItem value="diplomas">Diplomas</SelectItem>
-            <SelectItem value="clearances">Clearances</SelectItem>
-            <SelectItem value="evaluations">Evaluations</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
+            {categories?.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -307,10 +310,11 @@ function UploadForm({
           placeholder="File description..."
         />
       </div>
-      <Button type="submit" className="w-full" disabled={!file}>
+      <Button type="submit" className="w-full" disabled={!file || !categoryId}>
         <Upload className="h-4 w-4 mr-2" />
         Upload
       </Button>
     </form>
   );
 }
+

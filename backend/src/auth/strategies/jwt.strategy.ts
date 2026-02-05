@@ -27,15 +27,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const account = await this.prisma.account.findUnique({
       where: { id: payload.sub },
       include: {
-        employeeProfile: {
-          select: {
-            firstName: true,
-            lastName: true,
+        staffProfile: {
+          include: {
+            staffData: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
-        teacherProfile: {
+        schoolPersonnelProfile: {
           include: {
-            teacherData: {
+            schoolPersonnelData: {
               select: {
                 firstName: true,
                 lastName: true,
@@ -52,12 +56,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     // Extract firstName and lastName from profile
     const firstName =
-      account.employeeProfile?.firstName ||
-      account.teacherProfile?.teacherData?.firstName ||
+      account.staffProfile?.staffData?.firstName ||
+      account.schoolPersonnelProfile?.schoolPersonnelData?.firstName ||
       null;
     const lastName =
-      account.employeeProfile?.lastName ||
-      account.teacherProfile?.teacherData?.lastName ||
+      account.staffProfile?.staffData?.lastName ||
+      account.schoolPersonnelProfile?.schoolPersonnelData?.lastName ||
       null;
 
     return {

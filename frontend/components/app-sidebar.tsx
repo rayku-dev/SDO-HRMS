@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, LogOut, FolderOpen, Users } from "lucide-react";
+import { LayoutDashboard, FileText, LogOut, FolderOpen, Users, Library } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -71,7 +72,14 @@ export function AppSidebar() {
       icon: Users,
       roles: ["ADMIN", "HR"],
     },
+    {
+      title: "File Categories",
+      url: "/admin/files201/categories",
+      icon: Library,
+      roles: ["ADMIN", "HR"],
+    },
   ];
+
 
   // Combine items based on role
   const allItems = [...commonItems, ...adminItems];

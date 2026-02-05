@@ -16,15 +16,19 @@ export class UsersService {
   async findAll() {
     return this.prisma.account.findMany({
       include: {
-        employeeProfile: {
-          select: {
-            firstName: true,
-            lastName: true,
+        staffProfile: {
+          include: {
+            staffData: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
-        teacherProfile: {
+        schoolPersonnelProfile: {
           include: {
-            teacherData: {
+            schoolPersonnelData: {
               select: {
                 firstName: true,
                 lastName: true,
@@ -43,10 +47,14 @@ export class UsersService {
     const account = await this.prisma.account.findUnique({
       where: { id },
       include: {
-        employeeProfile: true,
-        teacherProfile: {
+        staffProfile: {
           include: {
-            teacherData: true,
+            staffData: true,
+          },
+        },
+        schoolPersonnelProfile: {
+          include: {
+            schoolPersonnelData: true,
           },
         },
       },
@@ -57,12 +65,12 @@ export class UsersService {
     }
 
     const firstName =
-      account.employeeProfile?.firstName ||
-      account.teacherProfile?.teacherData?.firstName ||
+      account.staffProfile?.staffData?.firstName ||
+      account.schoolPersonnelProfile?.schoolPersonnelData?.firstName ||
       null;
     const lastName =
-      account.employeeProfile?.lastName ||
-      account.teacherProfile?.teacherData?.lastName ||
+      account.staffProfile?.staffData?.lastName ||
+      account.schoolPersonnelProfile?.schoolPersonnelData?.lastName ||
       null;
 
     return {
@@ -81,7 +89,7 @@ export class UsersService {
     const account = await this.prisma.account.findUnique({
       where: { id },
       include: {
-        teacherProfile: true,
+        schoolPersonnelProfile: true,
       },
     });
 
@@ -111,34 +119,34 @@ export class UsersService {
 
     // Update profile if firstName/lastName provided
     if (updateUserDto.firstName || updateUserDto.lastName) {
-      if (account.role === 'TEACHER') {
-        // Check if teacher profile exists
-        const teacherProfile = await this.prisma.teacherProfile.findUnique({
+      if (account.role === 'SCHOOL_PERSONNEL') {
+        // Check if school personnel profile exists
+        const schoolPersonnelProfile = await this.prisma.schoolPersonnelProfile.findUnique({
           where: { accountId: id },
         });
 
-        if (teacherProfile) {
-          // Update existing teacher data or create if doesn't exist
-          await this.prisma.teacherData.upsert({
+        if (schoolPersonnelProfile) {
+          // Update existing school personnel data or create if doesn't exist
+          await this.prisma.schoolPersonnelData.upsert({
             where: {
-              teacherProfileId: teacherProfile.id,
+              schoolPersonnelProfileId: schoolPersonnelProfile.id,
             },
             update: {
               firstName: updateUserDto.firstName,
               lastName: updateUserDto.lastName,
             },
             create: {
-              teacherProfileId: teacherProfile.id,
+              schoolPersonnelProfileId: schoolPersonnelProfile.id,
               firstName: updateUserDto.firstName,
               lastName: updateUserDto.lastName,
             },
           });
         } else {
-          // Create teacher profile and data
-          const newTeacherProfile = await this.prisma.teacherProfile.create({
+          // Create school personnel profile and data
+          const newSchoolPersonnelProfile = await this.prisma.schoolPersonnelProfile.create({
             data: {
               accountId: id,
-              teacherData: {
+              schoolPersonnelData: {
                 create: {
                   firstName: updateUserDto.firstName,
                   lastName: updateUserDto.lastName,
@@ -148,18 +156,41 @@ export class UsersService {
           });
         }
       } else {
-        await this.prisma.employeeProfile.upsert({
+        // For staff roles (not SCHOOL_PERSONNEL)
+        const staffProfile = await this.prisma.staffProfile.findUnique({
           where: { accountId: id },
-          update: {
-            firstName: updateUserDto.firstName,
-            lastName: updateUserDto.lastName,
-          },
-          create: {
-            accountId: id,
-            firstName: updateUserDto.firstName,
-            lastName: updateUserDto.lastName,
-          },
         });
+
+        if (staffProfile) {
+          // Update existing staff data or create if doesn't exist
+          await this.prisma.staffData.upsert({
+            where: {
+              staffProfileId: staffProfile.id,
+            },
+            update: {
+              firstName: updateUserDto.firstName,
+              lastName: updateUserDto.lastName,
+            },
+            create: {
+              staffProfileId: staffProfile.id,
+              firstName: updateUserDto.firstName,
+              lastName: updateUserDto.lastName,
+            },
+          });
+        } else {
+          // Create staff profile and data
+          await this.prisma.staffProfile.create({
+            data: {
+              accountId: id,
+              staffData: {
+                create: {
+                  firstName: updateUserDto.firstName,
+                  lastName: updateUserDto.lastName,
+                },
+              },
+            },
+          });
+        }
       }
     }
 

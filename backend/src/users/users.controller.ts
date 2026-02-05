@@ -28,7 +28,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.HR)
+  @Roles(Role.ADMIN, Role.HR_HEAD, Role.HR_ASSOCIATE)
   @ApiBearerAuth('access-token')
   @ApiCookieAuth('refresh-token')
   @ApiResponse({ status: 200, description: 'List of all accounts' })
@@ -43,7 +43,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(Role.ADMIN, Role.HR)
+  @Roles(Role.ADMIN, Role.HR_HEAD, Role.HR_ASSOCIATE)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
@@ -56,13 +56,13 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN, Role.HR)
+  @Roles(Role.ADMIN, Role.HR_HEAD, Role.HR_ASSOCIATE)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN, Role.HR)
+  @Roles(Role.ADMIN, Role.HR_HEAD, Role.HR_ASSOCIATE)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

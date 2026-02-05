@@ -181,7 +181,7 @@ export default function Files201ManagementPage() {
                     <TableCell>
                       <Badge variant="outline">{file.account?.role}</Badge>
                     </TableCell>
-                    <TableCell>{file.category || "Uncategorized"}</TableCell>
+                    <TableCell>{file.category || (file as any).fileCategory?.name || "Uncategorized"}</TableCell>
                     <TableCell>{formatFileSize(file.fileSize)}</TableCell>
                     <TableCell>
                       {new Date(file.uploadedAt).toLocaleDateString()}
@@ -264,7 +264,7 @@ function UserFilesView({ accountId }: { accountId: string }) {
           <div>
             <div className="font-medium">{file.fileName}</div>
             <div className="text-sm text-muted-foreground">
-              {file.category || "Uncategorized"} • {formatFileSize(file.fileSize)}
+              {file.category || (file as any).fileCategory?.name || "Uncategorized"} • {formatFileSize(file.fileSize)}
             </div>
           </div>
           <div className="text-sm text-muted-foreground">

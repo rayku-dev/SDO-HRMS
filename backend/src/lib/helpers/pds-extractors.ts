@@ -1,9 +1,9 @@
 import { PrismaService } from '@/prisma/prisma.service';
 
 /**
- * Extract teacher data from PDS JSON structure
+ * Extract school personnel data from PDS JSON structure
  */
-export function extractTeacherData(pds: {
+export function extractSchoolPersonnelData(pds: {
   personalData: Record<string, any>;
   civilServiceData?: Record<string, any>;
 }) {
@@ -75,9 +75,9 @@ export function extractEligibilities(
 }
 
 /**
- * Extract employee data from PDS JSON structure
+ * Extract staff data from PDS JSON structure
  */
-export function extractEmployeeData(pds: {
+export function extractStaffData(pds: {
   personalData: Record<string, any>;
 }) {
   const personal = pds.personalData || {};
@@ -131,9 +131,9 @@ export function extractEmployeeData(pds: {
 }
 
 /**
- * Auto-populate teacher profile from PDS data
+ * Auto-populate school personnel profile from PDS data
  */
-export async function populateTeacherProfile(
+export async function populateSchoolPersonnelProfile(
   prisma: PrismaService,
   accountId: string,
   pds: {
@@ -141,67 +141,83 @@ export async function populateTeacherProfile(
     civilServiceData?: Record<string, any>;
   },
 ) {
-  const teacherData = extractTeacherData(pds);
+  const schoolPersonnelData = extractSchoolPersonnelData(pds);
   const eligibilities = extractEligibilities(pds.civilServiceData);
 
-  // Get or create teacher profile
-  let teacherProfile = await prisma.teacherProfile.findUnique({
+  // Get or create school personnel profile
+  let schoolPersonnelProfile = await prisma.schoolPersonnelProfile.findUnique({
     where: { accountId },
   });
 
-  if (!teacherProfile) {
-    teacherProfile = await prisma.teacherProfile.create({
+  if (!schoolPersonnelProfile) {
+    schoolPersonnelProfile = await prisma.schoolPersonnelProfile.create({
       data: {
         accountId,
       },
     });
   }
 
-  // Upsert teacher data
-  await prisma.teacherData.upsert({
-    where: { teacherProfileId: teacherProfile.id },
-    update: teacherData,
+  // Upsert school personnel data
+  await prisma.schoolPersonnelData.upsert({
+    where: { schoolPersonnelProfileId: schoolPersonnelProfile.id },
+    update: schoolPersonnelData,
     create: {
-      teacherProfileId: teacherProfile.id,
-      ...teacherData,
+      schoolPersonnelProfileId: schoolPersonnelProfile.id,
+      ...schoolPersonnelData,
     },
   });
 
   // Handle eligibilities - delete existing and create new ones
   if (eligibilities.length > 0) {
     await prisma.eligibility.deleteMany({
-      where: { teacherProfileId: teacherProfile.id },
+      where: { schoolPersonnelProfileId: schoolPersonnelProfile.id },
     });
 
     await prisma.eligibility.createMany({
       data: eligibilities.map((elig) => ({
-        teacherProfileId: teacherProfile.id,
+        schoolPersonnelProfileId: schoolPersonnelProfile.id,
         ...elig,
       })),
     });
   }
 
-  return teacherProfile;
+  return schoolPersonnelProfile;
 }
 
 /**
- * Auto-populate employee profile from PDS data
+ * Auto-populate staff profile from PDS data
  */
-export async function populateEmployeeProfile(
+export async function populateStaffProfile(
   prisma: PrismaService,
   accountId: string,
   pds: {
     personalData: Record<string, any>;
   },
 ) {
-  const employeeData = extractEmployeeData(pds);
+  const staffData = extractStaffData(pds);
 
-  await prisma.employeeProfile.upsert({
+  // Get or create staff profile
+  let staffProfile = await prisma.staffProfile.findUnique({
     where: { accountId },
-    update: employeeData,
+  });
+
+  if (!staffProfile) {
+    staffProfile = await prisma.staffProfile.create({
+      data: {
+        accountId,
+      },
+    });
+  }
+
+  // Upsert staff data
+  await prisma.staffData.upsert({
+    where: { staffProfileId: staffProfile.id },
+    update: staffData,
     create: {
-      accountId,
-      ...employeeData,
+      staffProfileId: staffProfile.id,
+      ...staffData,
     },
   });
+
+  return staffProfile;
 }

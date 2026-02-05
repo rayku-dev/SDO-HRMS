@@ -82,5 +82,8 @@
     "typescript": "^5.9.3"
   },
   "main": ".eslintrc.js",
-  "keywords": []
+  "keywords": [],
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
 }

@@ -26,7 +26,9 @@ export interface File201 {
       };
     };
   };
+  fileCategory?: FileCategory;
 }
+
 
 export interface File201Stats {
   totalFiles: number;
@@ -34,16 +36,40 @@ export interface File201Stats {
   categories: Record<string, number>;
 }
 
+export interface FileCategory {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const files201Api = {
+  getCategories: async (): Promise<FileCategory[]> => {
+    const response = await api.get("/files201/categories");
+    return response.data;
+  },
+
+  createCategory: async (data: { name: string; description?: string }): Promise<FileCategory> => {
+    const response = await api.post("/files201/categories", data);
+    return response.data;
+  },
+
+  deleteCategory: async (id: string): Promise<void> => {
+    await api.delete(`/files201/categories/${id}`);
+  },
+
   upload: async (
     file: File,
     category?: string,
     description?: string,
     accountId?: string,
+    categoryId?: string,
   ): Promise<File201> => {
     const formData = new FormData();
     formData.append("file", file);
     if (category) formData.append("category", category);
+    if (categoryId) formData.append("categoryId", categoryId);
     if (description) formData.append("description", description);
     if (accountId) formData.append("accountId", accountId);
 

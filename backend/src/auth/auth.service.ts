@@ -76,11 +76,17 @@ export class AuthService {
 
       // Create profile based on role if needed
       if (firstName || lastName) {
-        // For now, we'll create employee profile if firstName/lastName provided
+        // For now, we'll create staff profile if firstName/lastName provided
         // In production, role should be determined during registration
-        await this.prisma.employeeProfile.create({
+        const staffProfile = await this.prisma.staffProfile.create({
           data: {
             accountId: account.id,
+          },
+        });
+
+        await this.prisma.staffData.create({
+          data: {
+            staffProfileId: staffProfile.id,
             firstName: firstName || null,
             lastName: lastName || null,
           },
@@ -126,16 +132,20 @@ export class AuthService {
   }
 
   /**
-   * Get account profile (employee or teacher)
+   * Get account profile (staff or school personnel)
    */
   private async getAccountProfile(accountId: string) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
       include: {
-        employeeProfile: true,
-        teacherProfile: {
+        staffProfile: {
           include: {
-            teacherData: true,
+            staffData: true,
+          },
+        },
+        schoolPersonnelProfile: {
+          include: {
+            schoolPersonnelData: true,
           },
         },
       },
@@ -145,17 +155,17 @@ export class AuthService {
       return { firstName: null, lastName: null };
     }
 
-    if (account.employeeProfile) {
+    if (account.staffProfile?.staffData) {
       return {
-        firstName: account.employeeProfile.firstName,
-        lastName: account.employeeProfile.lastName,
+        firstName: account.staffProfile.staffData.firstName,
+        lastName: account.staffProfile.staffData.lastName,
       };
     }
 
-    if (account.teacherProfile?.teacherData) {
+    if (account.schoolPersonnelProfile?.schoolPersonnelData) {
       return {
-        firstName: account.teacherProfile.teacherData.firstName,
-        lastName: account.teacherProfile.teacherData.lastName,
+        firstName: account.schoolPersonnelProfile.schoolPersonnelData.firstName,
+        lastName: account.schoolPersonnelProfile.schoolPersonnelData.lastName,
       };
     }
 

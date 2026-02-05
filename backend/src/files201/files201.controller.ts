@@ -49,8 +49,26 @@ const storage = diskStorage({
 export class Files201Controller {
   constructor(private readonly files201Service: Files201Service) {}
 
+  @Get('categories')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
+  findAllCategories() {
+    return this.files201Service.getCategories();
+  }
+
+  @Post('categories')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE')
+  createCategory(@Body() data: { name: string; description?: string }) {
+    return this.files201Service.createCategory(data);
+  }
+
+  @Delete('categories/:id')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE')
+  deleteCategory(@Param('id') id: string) {
+    return this.files201Service.deleteCategory(id);
+  }
+
   @Post('upload')
-  @Roles('ADMIN', 'HR', 'EMPLOYEE', 'TEACHER', 'REGULAR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   @UseInterceptors(
     FileInterceptor('file', {
       storage,
@@ -63,6 +81,7 @@ export class Files201Controller {
     @CurrentUser() user: User,
     @UploadedFile() file: Express.Multer.File,
     @Body('category') category?: string,
+    @Body('categoryId') categoryId?: string,
     @Body('description') description?: string,
     @Body('accountId') accountId?: string,
   ) {
@@ -72,7 +91,7 @@ export class Files201Controller {
 
     // Non-admin users can only upload for themselves
     const targetAccountId = accountId || user.id;
-    if (!['ADMIN', 'HR'].includes(user.role) && targetAccountId !== user.id) {
+    if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && targetAccountId !== user.id) {
       throw new ForbiddenException('You can only upload files for yourself');
     }
 
@@ -83,46 +102,48 @@ export class Files201Controller {
         filePath: file.filename,
         fileSize: file.size,
         mimeType: file.mimetype,
-        category: category || null,
-        description: description || null,
+        category: category || undefined,
+        categoryId: categoryId || undefined,
+        description: description || undefined,
       },
       user.id,
     );
   }
 
+
   @Get()
-  @Roles('ADMIN', 'HR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE')
   findAll() {
     return this.files201Service.findAll();
   }
 
   @Get('my-files')
-  @Roles('ADMIN', 'HR', 'EMPLOYEE', 'TEACHER', 'REGULAR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   findMyFiles(@CurrentUser() user: User) {
     return this.files201Service.findByAccountId(user.id);
   }
 
   @Get('account/:accountId')
-  @Roles('ADMIN', 'HR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE')
   findByAccount(@Param('accountId') accountId: string) {
     return this.files201Service.findByAccountId(accountId);
   }
 
   @Get('stats')
-  @Roles('ADMIN', 'HR', 'EMPLOYEE', 'TEACHER', 'REGULAR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   getStats(@CurrentUser() user: User) {
-    const accountId = ['ADMIN', 'HR'].includes(user.role) ? undefined : user.id;
+    const accountId = ['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) ? undefined : user.id;
     return this.files201Service.getFileStats(accountId);
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'HR', 'EMPLOYEE', 'TEACHER', 'REGULAR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   findOne(@Param('id') id: string, @CurrentUser() user: User) {
     return this.files201Service.findOne(id);
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'HR', 'EMPLOYEE', 'TEACHER', 'REGULAR')
+  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   remove(@Param('id') id: string, @CurrentUser() user: User) {
     return this.files201Service.delete(id, user.id, user.role);
   }

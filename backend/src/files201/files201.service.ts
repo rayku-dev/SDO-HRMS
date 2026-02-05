@@ -22,6 +22,7 @@ export class Files201Service {
   }
 
   async create(accountId: string, createFileDto: CreateFile201Dto, uploadedBy?: string) {
+    // If strict mode is requested we might want to validate categoryId, but DB constraints handle ref integrity
     return this.prisma.file201.create({
       data: {
         accountId,
@@ -30,31 +31,59 @@ export class Files201Service {
         fileSize: createFileDto.fileSize,
         mimeType: createFileDto.mimeType,
         category: createFileDto.category || null,
+        categoryId: createFileDto.categoryId || null,
         description: createFileDto.description || null,
         uploadedBy: uploadedBy || accountId,
       },
     });
   }
 
+  // --- Category Management ---
+
+  async getCategories() {
+    return this.prisma.fileCategory.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async createCategory(data: { name: string; description?: string }) {
+    return this.prisma.fileCategory.create({
+      data,
+    });
+  }
+
+  async deleteCategory(id: string) {
+    return this.prisma.fileCategory.delete({
+      where: { id },
+    });
+  }
+
+  // --------------------------
+
   async findAll(accountId?: string) {
     const where = accountId ? { accountId } : {};
     return this.prisma.file201.findMany({
       where,
       include: {
+        fileCategory: true,
         account: {
           select: {
             id: true,
             email: true,
             role: true,
-            employeeProfile: {
-              select: {
-                firstName: true,
-                lastName: true,
+            staffProfile: {
+              include: {
+                staffData: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
               },
             },
-            teacherProfile: {
+            schoolPersonnelProfile: {
               include: {
-                teacherData: {
+                schoolPersonnelData: {
                   select: {
                     firstName: true,
                     lastName: true,
@@ -74,6 +103,9 @@ export class Files201Service {
   async findByAccountId(accountId: string) {
     return this.prisma.file201.findMany({
       where: { accountId },
+      include: {
+        fileCategory: true,
+      },
       orderBy: {
         uploadedAt: 'desc',
       },
@@ -84,6 +116,7 @@ export class Files201Service {
     const file = await this.prisma.file201.findUnique({
       where: { id },
       include: {
+        fileCategory: true,
         account: {
           select: {
             id: true,
@@ -111,7 +144,7 @@ export class Files201Service {
     }
 
     // Only admin/HR or file owner can delete
-    if (!['ADMIN', 'HR'].includes(userRole) && file.accountId !== accountId) {
+    if (!['ADMIN', 'HR_ASSOCIATE', 'HR_HEAD'].includes(userRole) && file.accountId !== accountId) {
       throw new ForbiddenException('You can only delete your own files');
     }
 
@@ -130,11 +163,15 @@ export class Files201Service {
 
   async getFileStats(accountId?: string) {
     const where = accountId ? { accountId } : {};
-    const files = await this.prisma.file201.findMany({ where });
+    const files = await this.prisma.file201.findMany({
+      where,
+      include: { fileCategory: true },
+    });
 
     const totalSize = files.reduce((sum, file) => sum + file.fileSize, 0);
     const categories = files.reduce((acc, file) => {
-      const cat = file.category || 'uncategorized';
+      // Use category name from relation or legacy field or Uncategorized
+      const cat = file.fileCategory?.name || file.category || 'Uncategorized';
       acc[cat] = (acc[cat] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -146,3 +183,4 @@ export class Files201Service {
     };
   }
 }
+

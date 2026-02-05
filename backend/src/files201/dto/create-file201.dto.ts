@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateFile201Dto {
   @IsString()
@@ -20,6 +20,20 @@ export class CreateFile201Dto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
+export class CreateFileCategoryDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
   @IsString()
   @IsOptional()
