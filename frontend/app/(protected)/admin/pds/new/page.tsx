@@ -299,76 +299,78 @@ export default function NewPdsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/pds">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+      <div className="mb-6 flex flex-col gap-6 rounded-2xl border bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/pds">
+              <Button variant="outline" size="icon" className="h-10 w-10 rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10">
+                <ArrowLeft className="h-5 w-5 text-primary" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">New Personal Data Sheet</h1>
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+                Fill out all required fields
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowPreview(!showPreview)}
+              disabled={!pdsData}
+              className="border-primary/20 hover:bg-primary/5"
+            >
+              <Eye className="h-4 w-4 mr-2 text-primary" />
+              {showPreview ? "Hide Preview" : "Preview PDF"}
             </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">New Personal Data Sheet</h1>
-            <p className="text-muted-foreground mt-1">
-              Fill out all required fields
-            </p>
-
-            {/* User selector - required */}
-            {user?.role === "ADMIN" && users && (
-              <div className="mt-4 max-w-md">
-                <Label
-                  htmlFor="user-select"
-                  className="text-base font-semibold"
-                >
-                  Select User <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={selectedUserId}
-                  onValueChange={setSelectedUserId}
-                  disabled={checkingExisting}
-                >
-                  <SelectTrigger id="user-select" className="mt-2">
-                    <SelectValue placeholder="Select a user to create PDS for..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.firstName || u.lastName
-                          ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
-                          : "Unnamed User"}{" "}
-                        - {u.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {checkingExisting && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Checking for existing PDS...
-                  </p>
-                )}
-                {!selectedUserId && (
-                  <p className="text-xs text-amber-600 mt-2">
-                    ⚠️ Please select a user before filling out the form
-                  </p>
-                )}
-              </div>
-            )}
+            <Button onClick={handleGeneratePdf} disabled={!pdsData || isLoading} className="shadow-lg shadow-primary/20">
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowPreview(!showPreview)}
-            disabled={!pdsData}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            {showPreview ? "Hide Preview" : "Preview PDF"}
-          </Button>
-          <Button onClick={handleGeneratePdf} disabled={!pdsData || isLoading}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
-        </div>
+
+        {/* User selector section */}
+        {user?.role === "ADMIN" && users && (
+          <div className="max-w-xl rounded-xl border bg-background/50 p-4">
+            <Label
+              htmlFor="user-select"
+              className="text-sm font-medium text-foreground"
+            >
+              Select User <span className="text-primary">*</span>
+            </Label>
+            <Select
+              value={selectedUserId}
+              onValueChange={setSelectedUserId}
+              disabled={checkingExisting}
+            >
+              <SelectTrigger id="user-select" className="mt-2 bg-background border-primary/20 h-10">
+                <SelectValue placeholder="Select a user to create PDS for..." />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.firstName || u.lastName
+                      ? `${u.firstName || ""} ${u.lastName || ""}`.trim()
+                      : "Unnamed User"}{" "}
+                    - {u.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {checkingExisting && (
+              <p className="text-xs text-primary mt-2 animate-pulse">
+                Checking for existing PDS...
+              </p>
+            )}
+            {!selectedUserId && (
+              <p className="text-xs text-amber-500 mt-2 font-medium">
+                ⚠️ Please select a user before filling out the form
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {showPreview && pdsData && (

@@ -53,7 +53,7 @@ const items = [
 
 export function Header() {
   return (
-    <header className="border-b">
+    <header className="sticky top-0 z-10 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between gap-10 px-6">
         <div className="flex items-center">
           <SidebarToggle />

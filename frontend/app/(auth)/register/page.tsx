@@ -20,8 +20,16 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthError } from "@/@types/auth";
 
+import { useEffect } from "react";
+
 export default function RegisterPage() {
   const router = useRouter();
+
+  // Redirect to login as registration is now handled by admin
+  useEffect(() => {
+    router.replace("/login");
+  }, [router]);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",

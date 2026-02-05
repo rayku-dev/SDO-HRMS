@@ -306,17 +306,16 @@ export default function MyPdsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-6 rounded-2xl border bg-card/50 p-6 shadow-sm backdrop-blur-xl md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+            <Button variant="outline" size="icon" className="h-10 w-10 rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10">
+              <ArrowLeft className="h-5 w-5 text-primary" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">My Personal Data Sheet</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">My Personal Data Sheet</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               {isNewPds
                 ? "Create your Personal Data Sheet"
                 : "View and update your PDS information"}
@@ -324,16 +323,17 @@ export default function MyPdsPage() {
           </div>
         </div>
         {!isNewPds && (
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={() => setShowPreview(!showPreview)}
               disabled={!pdsData}
+              className="border-primary/20 hover:bg-primary/5"
             >
-              <Eye className="h-4 w-4 mr-2" />
+              <Eye className="h-4 w-4 mr-2 text-primary" />
               {showPreview ? "Hide Preview" : "Preview PDF"}
             </Button>
-            <Button onClick={handleGeneratePdf} disabled={!pdsData || isSaving}>
+            <Button onClick={handleGeneratePdf} disabled={!pdsData || isSaving} className="shadow-lg shadow-primary/20">
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>

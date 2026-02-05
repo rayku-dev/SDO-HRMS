@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -118,6 +117,56 @@
   --brand: oklch(0.6006 0.242472 293.8885);
 }
 
+.dashboard-theme {
+  /* Vibrant & Modern Palette */
+  --background: oklch(0.98 0.005 290); /* Very light purple tint */
+  --foreground: oklch(0.2 0.04 290);
+  
+  /* Glass Card Variables */
+  --card: oklch(1 0 0 / 0.65);
+  --card-foreground: oklch(0.2 0.04 290);
+  
+  --popover: oklch(1 0 0 / 0.9);
+  --popover-foreground: oklch(0.2 0.04 290);
+  
+  /* USER REQUESTED COLOR: #c084fc -> oklch approx 0.7 0.22 295 */
+  --primary: #c084fc; 
+  --primary-foreground: oklch(1 0 0);
+  
+  --secondary: oklch(0.96 0.02 290);
+  --secondary-foreground: oklch(0.25 0.08 290);
+  --muted: oklch(0.96 0.02 290);
+  --muted-foreground: oklch(0.5 0.05 290);
+  --accent: oklch(0.96 0.02 290);
+  --accent-foreground: oklch(0.25 0.08 290);
+  --destructive: oklch(0.577 0.245 27.325);
+  
+  --border: oklch(0.9 0.02 290 / 0.5);
+  --input: oklch(0.9 0.02 290 / 0.5);
+  --ring: #c084fc;
+  --radius: 1rem;
+  
+  /* Glass Sidebar */
+  --sidebar: oklch(1 0 0 / 0.6);
+  --sidebar-foreground: oklch(0.3 0.05 290);
+  --sidebar-primary: #c084fc;
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: #c084fc1a; /* 10% opacity hex */
+  --sidebar-accent-foreground: #a060e0; /* Slightly darker for text */
+  --sidebar-border: oklch(0.9 0.02 290 / 0.2);
+  --sidebar-ring: #c084fc;
+}
+
+.dashboard-theme.dark {
+  --background: oklch(0.1 0.05 290);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.15 0.05 290 / 0.6);
+  --card-foreground: oklch(0.98 0 0);
+  --primary: #c084fc;
+  --sidebar: oklch(0.1 0.05 290 / 0.6);
+  --border: oklch(1 0 0 / 0.1);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -127,43 +176,74 @@
   }
 }
 
+/* --- LANDING PAGE STYLES (Keep as is) --- */
 .glass-effect {
   @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
 }
-
 .glass-card {
   @apply rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
 }
+/* ... etc ... */
 
-.glass-button {
-  @apply bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 shadow-md transition-all;
+/* --- NEW MODERN DASHBOARD STYLES --- */
+
+/* 1. The Global Dashboard Mist - PURPLE EDITION */
+.dashboard-wrapper {
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(270,40%,20%,1) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(280,40%,30%,1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, hsla(290,40%,30%,1) 0, transparent 50%);
+  background-size: 100% 100%;
+  background-attachment: fixed;
+}
+/* Light mode mist */
+.dashboard-theme .dashboard-wrapper {
+   background: 
+    radial-gradient(circle at 15% 50%, rgba(220, 200, 255, 0.4), transparent 40%), 
+    radial-gradient(circle at 85% 30%, rgba(192, 132, 252, 0.15), transparent 40%);
+   background-color: var(--background);
 }
 
-.gradient-text {
-  @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-slate-500;
+/* 2. Enhanced Glass Cards in Dashboard only */
+.dashboard-theme div[data-slot="card"] {
+  @apply backdrop-blur-xl shadow-lg border-white/40;
+  background-color: var(--card); /* Uses the transparent variable */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.hero-glow {
-  @apply relative;
+.dashboard-theme div[data-slot="card"]:hover {
+  @apply shadow-xl border-[#c084fc]/30; /* Purple glow on border */
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(192, 132, 252, 0.2);
 }
 
-.hero-glow::after {
-  content: "";
-  @apply absolute -z-10 w-full h-full top-0 left-0 blur-3xl opacity-30 bg-gradient-to-r from-primary/50 to-purple-500/50 rounded-full;
+/* 3. Modern Sidebar Override */
+.dashboard-theme [data-slot="sidebar"],
+.dashboard-theme .bg-sidebar {
+  @apply border-r border-white/20 backdrop-blur-2xl;
+  background-color: var(--sidebar) !important;
 }
 
-/* Added floating animation for hero icons */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+/* 4. Beautiful Buttons in Dashboard - USER COLOR GRADIENT */
+.dashboard-theme button[data-variant="default"] {
+  background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%); /* Purple Gradient */
+  @apply shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 border-none;
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+.dashboard-theme button[data-variant="outline"] {
+  @apply border-[#c084fc]/20 text-[#a060e0] hover:bg-[#c084fc]/10 hover:border-[#c084fc]/50 backdrop-blur-sm transition-all;
 }
 
+/* 5. Table Polish */
+.dashboard-theme table {
+  @apply border-separate border-spacing-y-2;
+}
+.dashboard-theme tr {
+  @apply hover:bg-[#c084fc]/5 transition-colors rounded-lg bg-transparent;
+}
+.dashboard-theme td:first-child {
+  @apply rounded-l-lg;
+}
+.dashboard-theme td:last-child {
+  @apply rounded-r-lg;
+}

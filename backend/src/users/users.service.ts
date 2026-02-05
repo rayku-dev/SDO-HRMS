@@ -8,10 +8,94 @@ import { PrismaService } from '@/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+
+  async create(createUserDto: CreateUserDto) {
+    const { email, password, firstName, lastName, role, isActive } = createUserDto;
+
+    const existingAccount = await this.prisma.account.findUnique({
+      where: { email },
+    });
+
+    if (existingAccount) {
+      throw new ConflictException('Email is already in use');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const account = await this.prisma.account.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: role || 'REGULAR',
+        isActive: isActive !== undefined ? isActive : true,
+      },
+    });
+
+    if (firstName || lastName) {
+      if (account.role === 'SCHOOL_PERSONNEL') {
+        await this.prisma.schoolPersonnelProfile.create({
+          data: {
+            accountId: account.id,
+            schoolPersonnelData: {
+              create: {
+                firstName: firstName || null,
+                lastName: lastName || null,
+              },
+            },
+          },
+        });
+      } else {
+        await this.prisma.staffProfile.create({
+          data: {
+            accountId: account.id,
+            staffData: {
+              create: {
+                firstName: firstName || null,
+                lastName: lastName || null,
+              },
+            },
+          },
+        });
+      }
+    }
+
+    return this.findOne(account.id);
+  }
+
+  async importUsers(users: any[]) {
+    const results = {
+      success: 0,
+      failed: 0,
+      details: [] as any[],
+    };
+
+    for (const user of users) {
+      try {
+        await this.create({
+          email: user.email,
+          password: user.password || 'Welcome123!',
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role || 'SCHOOL_PERSONNEL', // Default to teacher if importing bulk
+          isActive: true,
+        });
+        results.success++;
+      } catch (error) {
+        results.failed++;
+        results.details.push({
+          email: user.email,
+          error: error.message,
+        });
+      }
+    }
+
+    return results;
+  }
 
   async findAll() {
     return this.prisma.account.findMany({

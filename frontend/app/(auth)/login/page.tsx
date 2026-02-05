@@ -98,7 +98,7 @@ export default function LoginPage() {
             {isLoading ? "Logging in..." : "Login"}
           </Button>
 
-          <p className="text-sm text-center text-muted-foreground">
+          {/* <p className="text-sm text-center text-muted-foreground">
             {"Don't have an account? "}
             <Link
               href="/register"
@@ -106,7 +106,7 @@ export default function LoginPage() {
             >
               Register
             </Link>
-          </p>
+          </p> */}
         </CardFooter>
       </form>
     </Card>

@@ -77,6 +77,12 @@ export function AppSidebar() {
       icon: Library,
       roles: ["ADMIN", "HR"],
     },
+    {
+      title: "User Management",
+      url: "/admin/users",
+      icon: Users,
+      roles: ["ADMIN"],
+    },
   ];
 
 
@@ -118,22 +124,29 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      pathname === item.url ||
-                      pathname?.startsWith(item.url + "/")
-                    }
-                  >
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const isActive =
+                  pathname === item.url ||
+                  (pathname?.startsWith(item.url + "/") &&
+                    !menuItems.some(
+                      (other) =>
+                        other.url !== item.url &&
+                        other.url.startsWith(item.url + "/") &&
+                        (pathname === other.url ||
+                          pathname.startsWith(other.url + "/"))
+                    ));
+
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
