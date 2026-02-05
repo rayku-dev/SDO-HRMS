@@ -50,7 +50,6 @@ export class Files201Controller {
   constructor(private readonly files201Service: Files201Service) {}
 
   @Get('categories')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   findAllCategories() {
     return this.files201Service.getCategories();
   }
@@ -68,7 +67,6 @@ export class Files201Controller {
   }
 
   @Post('upload')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   @UseInterceptors(
     FileInterceptor('file', {
       storage,
@@ -118,7 +116,6 @@ export class Files201Controller {
   }
 
   @Get('my-files')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   findMyFiles(@CurrentUser() user: User) {
     return this.files201Service.findByAccountId(user.id);
   }
@@ -130,20 +127,17 @@ export class Files201Controller {
   }
 
   @Get('stats')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   getStats(@CurrentUser() user: User) {
     const accountId = ['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) ? undefined : user.id;
     return this.files201Service.getFileStats(accountId);
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   findOne(@Param('id') id: string, @CurrentUser() user: User) {
     return this.files201Service.findOne(id);
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   remove(@Param('id') id: string, @CurrentUser() user: User) {
     return this.files201Service.delete(id, user.id, user.role);
   }

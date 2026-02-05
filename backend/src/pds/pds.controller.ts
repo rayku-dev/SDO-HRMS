@@ -35,7 +35,6 @@ export class PdsController {
   constructor(private readonly pdsService: PdsService) {}
 
   @Post()
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   create(@Body() createPdsDto: CreatePdsDto, @CurrentUser() user: User) {
     // Non-admin users can only create PDS for themselves
     if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && createPdsDto.userId !== user.id) {
@@ -45,7 +44,6 @@ export class PdsController {
   }
 
   @Post('upsert')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   async upsert(@Body() createPdsDto: CreatePdsDto, @CurrentUser() user: User) {
     // Non-admin users can only upsert PDS for themselves
     if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && createPdsDto.userId !== user.id) {
@@ -69,7 +67,6 @@ export class PdsController {
   }
 
   @Get(':userId')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   findOne(@Param('userId') userId: string, @CurrentUser() user: User) {
     // Non-admin users can only view their own PDS
     if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && userId !== user.id) {
@@ -79,7 +76,6 @@ export class PdsController {
   }
 
   @Put(':userId')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   update(
     @Param('userId') userId: string,
     @Body() updatePdsDto: UpdatePdsDto,
@@ -99,7 +95,6 @@ export class PdsController {
   }
 
   @Post('generate-pdf')
-  @Roles('ADMIN', 'HR_HEAD', 'HR_ASSOCIATE', 'EMPLOYEE', 'SCHOOL_PERSONNEL', 'REGULAR')
   async generatePdf(
     @Body() generatePdfDto: GeneratePdfDto,
     @Res() res: Response,

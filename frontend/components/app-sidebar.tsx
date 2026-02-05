@@ -42,21 +42,20 @@ export function AppSidebar() {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
-      roles: ["ADMIN", "HR", "EMPLOYEE", "TEACHER", "REGULAR"],
     },
+
     {
       title: "My PDS",
       url: "/pds",
       icon: FileText,
-      roles: ["ADMIN", "HR", "EMPLOYEE", "TEACHER", "REGULAR"],
     },
     {
       title: "201 Files",
       url: "/files201",
       icon: FolderOpen,
-      roles: ["ADMIN", "HR", "EMPLOYEE", "TEACHER", "REGULAR"],
     },
   ];
+
 
   // Admin/HR-only items
   const adminItems = [
@@ -83,7 +82,7 @@ export function AppSidebar() {
 
   // Combine items based on role
   const allItems = [...commonItems, ...adminItems];
-  const menuItems = allItems.filter((item) => item.roles.includes(user.role));
+  const menuItems = allItems.filter((item) => !(item as any).roles || (item as any).roles.includes(user.role));
 
   const getUserInitials = () => {
     if (user.firstName && user.lastName) {
