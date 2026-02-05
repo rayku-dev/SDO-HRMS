@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+  TEACHER
+  REGULAR
+}
+
+// Account model - base auth layer
+model Account {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(REGULAR)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sessions         Session[]
+  pds              Pds?
+  employeeProfile  EmployeeProfile?
+  teacherProfile   TeacherProfile?
+  files201         File201[]
+
+  @@map("accounts")
+}
+
+// Employee Profile - for Admin, HR, Employee roles
+model EmployeeProfile {
+  id        String   @id @default(uuid())
+  accountId String   @unique @map("account_id")
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  firstName       String?  @map("first_name")
+  lastName        String?  @map("last_name")
+  middleName      String?  @map("middle_name")
+  dateOfBirth     DateTime? @map("date_of_birth")
+  placeOfBirth    String?  @map("place_of_birth")
+  sex             String?
+  civilStatus     String?  @map("civil_status")
+  address         String?
+  phoneNumber     String?  @map("phone_number")
+  position        String?
+  department      String?
+  employeeNumber  String?  @unique @map("employee_number")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("employee_profiles")
+}
+
+// Teacher Profile - for Teacher role
+model TeacherProfile {
+  id        String   @id @default(uuid())
+  accountId String   @unique @map("account_id")
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  teacherData TeacherData?
+  eligibilities Eligibility[]
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("teacher_profiles")
+}
+
+// Teacher Data - normalized teacher information
+model TeacherData {
+  id              String   @id @default(uuid())
+  teacherProfileId String  @unique @map("teacher_profile_id")
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  
+  firstName       String?  @map("first_name")
+  lastName        String?  @map("last_name")
+  middleName      String?  @map("middle_name")
+  nameExtension   String?  @map("name_extension")
+  dateOfBirth     DateTime? @map("date_of_birth")
+  placeOfBirth    String?  @map("place_of_birth")
+  sex             String?
+  civilStatus     String?  @map("civil_status")
+  height          String?
+  weight          String?
+  bloodType       String?  @map("blood_type")
+  
+  // Government IDs
+  gsisId          String?  @map("gsis_id")
+  pagibigId       String?  @map("pagibig_id")
+  philhealthId   String?  @map("philhealth_id")
+  sssId           String?  @map("sss_id")
+  tin             String?
+  agencyEmployeeNo String? @map("agency_employee_no")
+  
+  // Addresses
+  residentialAddress Json? @map("residential_address")
+  permanentAddress   Json? @map("permanent_address")
+  
+  // Contact
+  telephoneNo     String?  @map("telephone_no")
+  mobileNo        String?  @map("mobile_no")
+  email           String?
+  
+  // Station and Appointment
+  station         String?
+  appointment     String?
+  appointmentDate DateTime? @map("appointment_date")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("teacher_data")
+}
+
+// Eligibility - multiple civil service eligibilities per teacher
+model Eligibility {
+  id              String   @id @default(uuid())
+  teacherProfileId String  @map("teacher_profile_id")
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  
+  careerService   String?  @map("career_service")
+  rating          String?
+  dateOfExam      DateTime? @map("date_of_exam")
+  placeOfExam     String?  @map("place_of_exam")
+  licenseNumber   String?  @map("license_number")
+  validityDate    DateTime? @map("validity_date")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("eligibilities")
+}
+
+// File 201 - 201 file management
+model File201 {
+  id        String   @id @default(uuid())
+  accountId String   @map("account_id")
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  fileName      String   @map("file_name")
+  filePath      String   @map("file_path")
+  fileSize      Int      @map("file_size")
+  mimeType      String   @map("mime_type")
+  category      String?  // e.g., "certificates", "diplomas", "clearances"
+  description   String?
+  
+  uploadedBy    String?  @map("uploaded_by")
+  uploadedAt    DateTime @default(now()) @map("uploaded_at")
+  
+  @@index([accountId])
+  @@index([category])
+  @@map("files_201")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  refreshToken String   @unique @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  account Account @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Pds {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  account              Account  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personalData         Json     @map("personal_data")
+  familyData           Json     @map("family_data")
+  educationalData      Json     @map("educational_data")
+  civilServiceData     Json?    @map("civil_service_data")
+  workExperienceData   Json?    @map("work_experience_data")
+  voluntaryWorkData    Json?    @map("voluntary_work_data")
+  trainingProgramsData Json?    @map("training_programs_data")
+  otherInfo            Json?    @map("other_info")
+  lastpData            Json?    @map("lastp_data")
+  status               String   @default("draft")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("pds")
+}
