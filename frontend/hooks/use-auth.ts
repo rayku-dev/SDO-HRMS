@@ -8,7 +8,7 @@ import { AuthError, type User } from "@/@types/auth";
 import { usePathname } from "next/navigation";
 
 export function useAuth(
-  options: { required?: boolean; redirectTo?: string } = {}
+  options: { required?: boolean; redirectTo?: string } = {},
 ) {
   const pathname = usePathname();
   const router = useRouter();
@@ -29,15 +29,12 @@ export function useAuth(
     mutate(); // re-fetch /auth/me
   };
 
-
   useEffect(() => {
     if (!isLoading && !error && !pathname.startsWith("/error")) {
       // Only update if server is reachable
       sessionStorage.setItem("lastGoodRoute", pathname);
     }
   }, [pathname, isLoading, error]);
-
-
 
   useEffect(() => {
     if (!isLoading && error instanceof AuthError && error.status === 500) {
@@ -58,7 +55,6 @@ export function useAuth(
     serverDown,
   ]);
 
-
   useEffect(() => {
     if (!isLoading && !user && options.required) {
       router.push(options.redirectTo || "/login");
@@ -68,7 +64,7 @@ export function useAuth(
   const handleLogout = async () => {
     await logout();
     mutate(null, false);
-    router.push("/login");
+    router.push("/");
   };
 
   return {

@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { AuthError } from "@/@types/auth";
 
 export default function LoginPage() {
@@ -25,25 +26,24 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
     try {
       await login(email, password);
 
       const from = searchParams.get("from") || "/dashboard";
+      toast.success("Welcome back!");
       router.push(from);
       router.refresh();
     } catch (err) {
       if (err instanceof AuthError) {
-        setError(err.message);
+        toast.error(err.message);
       } else {
-        setError("An unexpected error occurred");
+        toast.error("An unexpected error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -60,11 +60,6 @@ export default function LoginPage() {
       </CardHeader>
       <form onSubmit={handleSubmit} className="space-y-6">
         <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

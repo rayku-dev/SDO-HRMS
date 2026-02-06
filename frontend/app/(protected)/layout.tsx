@@ -25,15 +25,16 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div className="dashboard-theme min-h-screen font-sans" style={{ fontFamily: "var(--font-sans)" }}>
+    <div
+      className="dashboard-theme min-h-screen font-sans"
+      style={{ fontFamily: "var(--font-sans)" }}
+    >
       <div className="dashboard-wrapper min-h-screen bg-background/50">
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset className="bg-transparent">
             <Header />
-            <div className="flex flex-1 flex-col gap-6 p-6">
-              {children}
-            </div>
+            <div className="flex flex-1 flex-col gap-6 p-6">{children}</div>
           </SidebarInset>
         </SidebarProvider>
       </div>

@@ -1,19 +1,23 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useAuth } from "@/hooks/use-auth"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import type React from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth({ required: true, redirectTo: "/login" })
-  const router = useRouter()
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, isLoading } = useAuth({ required: true, redirectTo: "/login" });
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && user && !["ADMIN", "HR"].includes(user.role)) {
-      router.push("/error/403")
+      router.push("/error/403");
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -23,13 +27,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (user && !["ADMIN", "HR"].includes(user.role)) {
-    return null
+    return null;
   }
 
   // Admin layout just acts as a guard - parent layout handles navigation
-  return <>{children}</>
+  return <>{children}</>;
 }

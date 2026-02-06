@@ -56,7 +56,7 @@ export default function RegisterPage() {
         formData.email,
         formData.password,
         formData.firstName,
-        formData.lastName
+        formData.lastName,
       );
 
       // Auto-login after successful registration

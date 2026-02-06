@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Full-stack authentication system with Next.js and NestJS",
 }
 
+import { Toaster } from "@/components/ui/sonner"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,7 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        {children}</body>
+        {children}
+        <Toaster richColors/>
+      </body>
     </html>
   )
 }

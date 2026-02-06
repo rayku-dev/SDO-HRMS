@@ -51,17 +51,36 @@ export class UsersController {
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-    // Map the excel data to our expected format
-    // Expected headers: Email, First Name, Last Name, Role, Password
-    const users = data.map((row) => ({
-      email: row.Email || row.email || row['Email Address'],
-      firstName: row['First Name'] || row.firstName || row.firstname,
-      lastName: row['Last Name'] || row.lastName || row.lastname,
-      role: row.Role || row.role,
-      password: row.Password || row.password,
-    }));
+    console.log('[Import] Raw data from XLSX:', data);
 
-    return this.usersService.importUsers(users);
+    // Map the excel data to our expected format with fuzzy header matching
+    const users = data.map((row) => {
+      // Find keys in the row object regardless of case or spaces
+      const findValue = (possibleNames: string[]) => {
+        const key = Object.keys(row).find(k => 
+          possibleNames.some(name => k.toLowerCase().trim() === name.toLowerCase())
+        );
+        return key ? row[key] : undefined;
+      };
+
+      return {
+        email: findValue(['email', 'email address', 'e-mail']),
+        firstName: findValue(['first name', 'firstname', 'given name']),
+        lastName: findValue(['last name', 'lastname', 'surname', 'family name']),
+        role: findValue(['role', 'type', 'position']) || 'SCHOOL_PERSONNEL',
+        password: findValue(['password', 'pass', 'pw']),
+      };
+    });
+
+    console.log('[Import] Mapped users:', users);
+
+    // Filter out rows that have no email
+    const validUsers = users.filter(u => u.email);
+    console.log('[Import] Valid users count:', validUsers.length);
+
+    const result = await this.usersService.importUsers(validUsers);
+    console.log('[Import] Result:', result);
+    return result;
   }
 
   @Get()

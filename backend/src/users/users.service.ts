@@ -27,44 +27,48 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const account = await this.prisma.account.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: role || 'REGULAR',
-        isActive: isActive !== undefined ? isActive : true,
-      },
+    const createdAccount = await this.prisma.$transaction(async (tx) => {
+      const account = await tx.account.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: role || 'REGULAR',
+          isActive: isActive !== undefined ? isActive : true,
+        },
+      });
+
+      if (firstName || lastName) {
+        if (role === 'SCHOOL_PERSONNEL') {
+          await tx.schoolPersonnelProfile.create({
+            data: {
+              accountId: account.id,
+              schoolPersonnelData: {
+                create: {
+                  firstName: firstName || null,
+                  lastName: lastName || null,
+                },
+              },
+            },
+          });
+        } else {
+          await tx.staffProfile.create({
+            data: {
+              accountId: account.id,
+              staffData: {
+                create: {
+                  firstName: firstName || null,
+                  lastName: lastName || null,
+                },
+              },
+            },
+          });
+        }
+      }
+
+      return account;
     });
 
-    if (firstName || lastName) {
-      if (account.role === 'SCHOOL_PERSONNEL') {
-        await this.prisma.schoolPersonnelProfile.create({
-          data: {
-            accountId: account.id,
-            schoolPersonnelData: {
-              create: {
-                firstName: firstName || null,
-                lastName: lastName || null,
-              },
-            },
-          },
-        });
-      } else {
-        await this.prisma.staffProfile.create({
-          data: {
-            accountId: account.id,
-            staffData: {
-              create: {
-                firstName: firstName || null,
-                lastName: lastName || null,
-              },
-            },
-          },
-        });
-      }
-    }
-
-    return this.findOne(account.id);
+    return this.findOne(createdAccount.id);
   }
 
   async importUsers(users: any[]) {
@@ -74,18 +78,33 @@ export class UsersService {
       details: [] as any[],
     };
 
+    console.log(`[UsersService] Starting import of ${users.length} users`);
+
     for (const user of users) {
       try {
+        console.log(`[UsersService] Processing user: ${user.email}`);
+        
+        // Normalize role for Prisma enum compatibility
+        let role = user.role || 'SCHOOL_PERSONNEL';
+        if (typeof role === 'string') {
+          role = role.toUpperCase().trim().replace(/\s+/g, '_');
+        }
+
+        console.log(`[UsersService] Normalized role for ${user.email}: ${role}`);
+
         await this.create({
           email: user.email,
           password: user.password || 'Welcome123!',
           firstName: user.firstName,
           lastName: user.lastName,
-          role: user.role || 'SCHOOL_PERSONNEL', // Default to teacher if importing bulk
+          role: role as any,
           isActive: true,
         });
+
+        console.log(`[UsersService] Successfully created user: ${user.email}`);
         results.success++;
       } catch (error) {
+        console.error(`[UsersService] Failed to create user ${user.email}:`, error.message);
         results.failed++;
         results.details.push({
           email: user.email,
@@ -94,6 +113,7 @@ export class UsersService {
       }
     }
 
+    console.log(`[UsersService] Import finished. Success: ${results.success}, Failed: ${results.failed}`);
     return results;
   }
 
