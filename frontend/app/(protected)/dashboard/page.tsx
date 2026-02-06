@@ -13,17 +13,40 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FileText, Users, ShoppingCart, Activity, AlertTriangle } from "lucide-react";
+import { FileText, Users, Activity, FileStack, Shield, ShoppingCart, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { pdsApi, type PdsData } from "@/lib/api/pds";
+import { files201Api } from "@/lib/api/files201";
 import { toast } from "sonner";
 import TallyCard from "@/components/reusable/tally-card";
 
-
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
-  // Only fetch users if admin
   const { users, isLoading: usersLoading } = useUsers();
+  const [pdsCount, setPdsCount] = useState<number>(0);
+  const [file201Count, setFile201Count] = useState<number>(0);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role === "ADMIN") {
+      const fetchStats = async () => {
+        try {
+          setIsStatsLoading(true);
+          const [pdsList, filesList] = await Promise.all([
+            pdsApi.getAll(),
+            files201Api.getAll()
+          ]);
+          setPdsCount(pdsList.length);
+          setFile201Count(filesList.length);
+        } catch (error) {
+          console.error("Failed to fetch stats:", error);
+        } finally {
+          setIsStatsLoading(false);
+        }
+      };
+      fetchStats();
+    }
+  }, [user]);
 
   if (authLoading) {
     return (
@@ -42,7 +65,14 @@ export default function DashboardPage() {
 
   // Show admin dashboard
   if (user.role === "ADMIN") {
-    return <AdminDashboard users={users} isLoading={usersLoading} />;
+    return (
+      <AdminDashboard 
+        users={users} 
+        isLoading={usersLoading || isStatsLoading} 
+        pdsCount={pdsCount} 
+        file201Count={file201Count} 
+      />
+    );
   }
 
   // Show regular user dashboard
@@ -52,16 +82,20 @@ export default function DashboardPage() {
 function AdminDashboard({
   users,
   isLoading,
+  pdsCount,
+  file201Count,
 }: {
   users?: any[];
   isLoading: boolean;
+  pdsCount: number;
+  file201Count: number;
 }) {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading users...</p>
+          <p className="text-muted-foreground">Loading dashboard data...</p>
         </div>
       </div>
     );
@@ -70,48 +104,48 @@ function AdminDashboard({
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-2 text-foreground tracking-tight">System Registry Metrics</h1>
         <p className="text-muted-foreground">
-          Manage users and system settings
+          Real-time administrative overview of system identities and records.
         </p>
       </div>
 
       <div className="grid md:grid-cols-4 gap-6 mb-8">
         <TallyCard
-          icon={Users}
-          title="Total Users"
-          value={users?.length.toString() || "0"}
-          change="12% from last month"
-          changeType="increase"
+          icon={FileStack}
+          title="Uploaded 201"
+          value={file201Count.toString()}
+          change="System documents"
+          changeType="neutral"
           iconColor="text-white"
-          iconBgColor="bg-emerald-500"
+          iconBgColor="bg-amber-500"
         />
         <TallyCard
-          icon={ShoppingCart}
-          title="Active Users"
-          value={users?.filter((u) => u.isActive).length.toString() || "0"}
-          change="8% from last month"
-          changeType="increase"
-          iconColor="text-white"
-          iconBgColor="bg-blue-500"
-        />
-        <TallyCard
-          icon={Activity}
-          title="Admins"
-          value={users?.filter((u) => u.role === "ADMIN").length.toString() || "0"}
-          change="2 new this week"
+          icon={FileText}
+          title="PDS"
+          value={pdsCount.toString()}
+          change="Personal data sheets"
           changeType="neutral"
           iconColor="text-white"
           iconBgColor="bg-purple-500"
         />
         <TallyCard
-          icon={AlertTriangle}
-          title="Pending"
-          value="3"
-          change="Needs attention"
-          changeType="decrease"
+          icon={Users}
+          title="Total users"
+          value={users?.length.toString() || "0"}
+          change="Registered accounts"
+          changeType="increase"
           iconColor="text-white"
-          iconBgColor="bg-amber-500"
+          iconBgColor="bg-emerald-500"
+        />
+        <TallyCard
+          icon={Activity}
+          title="Active user"
+          value={users?.filter((u) => u.isActive).length.toString() || "0"}
+          change="Active connections"
+          changeType="increase"
+          iconColor="text-white"
+          iconBgColor="bg-blue-500"
         />
       </div>
 

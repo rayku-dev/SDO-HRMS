@@ -142,13 +142,10 @@ export class PdsService {
   }
 
   async findAll() {
-    return this.prisma.pds.findMany({
+    const pdsList = await this.prisma.pds.findMany({
       include: {
         account: {
-          select: {
-            id: true,
-            email: true,
-            role: true,
+          include: {
             staffProfile: {
               include: {
                 staffData: {
@@ -160,7 +157,7 @@ export class PdsService {
               },
             },
             schoolPersonnelProfile: {
-              select: {
+              include: {
                 schoolPersonnelData: {
                   select: {
                     firstName: true,
@@ -175,6 +172,34 @@ export class PdsService {
       orderBy: {
         updatedAt: 'desc',
       },
+    });
+
+    return pdsList.map((pds) => {
+      const account = pds.account;
+      
+      // Try to get names from profiles first
+      let firstName = account.staffProfile?.staffData?.firstName || 
+                      account.schoolPersonnelProfile?.schoolPersonnelData?.firstName;
+      let lastName = account.staffProfile?.staffData?.lastName || 
+                     account.schoolPersonnelProfile?.schoolPersonnelData?.lastName;
+
+      // Fallback to names in PDS personalData if profile names are missing
+      if (!firstName && !lastName) {
+        const personalData = pds.personalData as any;
+        firstName = personalData?.firstName || personalData?.personalData?.firstName;
+        lastName = personalData?.lastName || personalData?.personalData?.lastName || personalData?.surname || personalData?.personalData?.surname;
+      }
+
+      return {
+        ...pds,
+        user: {
+          id: account.id,
+          email: account.email,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          role: account.role,
+        },
+      };
     });
   }
 

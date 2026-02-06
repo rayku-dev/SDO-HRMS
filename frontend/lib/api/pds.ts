@@ -12,6 +12,8 @@ export interface PdsData {
   otherInfo?: Record<string, any>;
   lastpData?: Record<string, any>;
   status?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreatePdsDto extends PdsData {}

@@ -37,32 +37,30 @@ export class UsersService {
         },
       });
 
-      if (firstName || lastName) {
-        if (role === 'SCHOOL_PERSONNEL') {
-          await tx.schoolPersonnelProfile.create({
-            data: {
-              accountId: account.id,
-              schoolPersonnelData: {
-                create: {
-                  firstName: firstName || null,
-                  lastName: lastName || null,
-                },
+      if (role === 'SCHOOL_PERSONNEL') {
+        await tx.schoolPersonnelProfile.create({
+          data: {
+            accountId: account.id,
+            schoolPersonnelData: {
+              create: {
+                firstName: firstName || null,
+                lastName: lastName || null,
               },
             },
-          });
-        } else {
-          await tx.staffProfile.create({
-            data: {
-              accountId: account.id,
-              staffData: {
-                create: {
-                  firstName: firstName || null,
-                  lastName: lastName || null,
-                },
+          },
+        });
+      } else if (role !== 'REGULAR') {
+        await tx.staffProfile.create({
+          data: {
+            accountId: account.id,
+            staffData: {
+              create: {
+                firstName: firstName || null,
+                lastName: lastName || null,
               },
             },
-          });
-        }
+          },
+        });
       }
 
       return account;
@@ -118,7 +116,7 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.prisma.account.findMany({
+    const accounts = await this.prisma.account.findMany({
       include: {
         staffProfile: {
           include: {
@@ -144,6 +142,28 @@ export class UsersService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    return accounts.map((account) => {
+      const firstName =
+        account.staffProfile?.staffData?.firstName ||
+        account.schoolPersonnelProfile?.schoolPersonnelData?.firstName ||
+        null;
+      const lastName =
+        account.staffProfile?.staffData?.lastName ||
+        account.schoolPersonnelProfile?.schoolPersonnelData?.lastName ||
+        null;
+
+      return {
+        id: account.id,
+        email: account.email,
+        firstName,
+        lastName,
+        role: account.role,
+        isActive: account.isActive,
+        createdAt: account.createdAt,
+        updatedAt: account.updatedAt,
+      };
     });
   }
 

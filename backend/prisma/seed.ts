@@ -216,12 +216,18 @@ async function main() {
 
   console.log('✅ Database seeded successfully!');
   console.log('Admin:', { email: admin.email, password: 'Admin@123' });
-  console.log('Approving Authority:', { email: approvingAuthority.email, password: 'ApprovingAuthority@123' });
+  console.log('Approving Authority:', {
+    email: approvingAuthority.email,
+    password: 'ApprovingAuthority@123',
+  });
   console.log('Employee:', { email: employee.email, password: 'Employee@123' });
   console.log('HR Associate:', { email: hrAssociate.email, password: 'HrAssociate@123' });
   console.log('HR Head:', { email: hrHead.email, password: 'HrHead@123' });
   console.log('Unit Head:', { email: unitHead.email, password: 'UnitHead@123' });
-  console.log('School Personnel:', { email: schoolPersonnel.email, password: 'SchoolPersonnel@123' });
+  console.log('School Personnel:', {
+    email: schoolPersonnel.email,
+    password: 'SchoolPersonnel@123',
+  });
   console.log('Regular:', { email: regular.email, password: 'Regular@123' });
 }
 
