@@ -25,39 +25,39 @@ export function SoundWaveAnimation({ className }: SoundWaveAnimationProps) {
     setCanvasDimensions();
     window.addEventListener("resize", setCanvasDimensions);
 
-    // Wave parameters with increased opacity and added stroke colors
+    // Wave parameters — each wave has unique color, frequency, and speed
     const waves = [
       {
-        amplitude: 40,
-        frequency: 0.005,
-        speed: 0.03,
-        color: "rgba(59, 130, 246, 0.35)",
-        strokeColor: "rgba(59, 130, 246, 0.5)",
+        amplitude: 35,
+        frequency: 0.01,
+        speed: 0.12,
+        color: "rgba(16, 185, 129, 0.34)", // emerald
+        strokeColor: "rgba(16, 185, 129, 0.55)",
         offset: 0,
       },
       {
-        amplitude: 25,
-        frequency: 0.015,
-        speed: 0.02,
-        color: "rgba(99, 102, 241, 0.3)",
-        strokeColor: "rgba(99, 102, 241, 0.45)",
-        offset: 100,
-      },
-      {
-        amplitude: 15,
+        amplitude: 28,
         frequency: 0.025,
-        speed: 0.01,
-        color: "rgba(139, 92, 246, 0.25)",
-        strokeColor: "rgba(139, 92, 246, 0.4)",
-        offset: 200,
+        speed: 0.3,
+        color: "rgba(99, 102, 241, 0.28)", // indigo
+        strokeColor: "rgba(99, 102, 241, 0.5)",
+        offset: 120,
       },
       {
-        amplitude: 30,
-        frequency: 0.01,
-        speed: 0.015,
-        color: "rgba(79, 70, 229, 0.3)",
-        strokeColor: "rgba(79, 70, 229, 0.45)",
-        offset: 300,
+        amplitude: 22,
+        frequency: 0.04,
+        speed: 0.6,
+        color: "rgba(244, 63, 94, 0.26)", // pink/red
+        strokeColor: "rgba(244, 90, 3 4, 0.45)",
+        offset: 240,
+      },
+      {
+        amplitude: 40,
+        frequency: 0.006,
+        speed: 0.08,
+        color: "rgba(59, 130, 246, 0.32)", // blue
+        strokeColor: "rgba(59, 130, 246, 0.5)",
+        offset: 360,
       },
     ];
 
@@ -87,7 +87,7 @@ export function SoundWaveAnimation({ className }: SoundWaveAnimationProps) {
       },
       time: number,
       width: number,
-      height: number
+      height: number,
     ) => {
       const { amplitude, frequency, speed, color, strokeColor, offset } = wave;
       const y = height / 2;

@@ -12,15 +12,27 @@ export default function FloatingIcons() {
         }}
         size={40}
       />
-      <Code2
+
+      <Fingerprint
+        className="absolute text-muted-foreground/24 animate-float"
+        style={{
+          top: "8%",
+          right: "12%",
+          animationDelay: "0.6s",
+        }}
+        size={30}
+      />
+
+      <Fingerprint
         className="absolute text-muted-foreground/30 animate-float"
         style={{
-          top: "25%",
-          right: "15%",
-          animationDelay: "2s",
+          top: "48%",
+          left: "5%",
+          animationDelay: "0.9s",
         }}
-        size={35}
+        size={28}
       />
+
       <Palette
         className="absolute text-muted-foreground/30 animate-float"
         style={{
@@ -30,6 +42,7 @@ export default function FloatingIcons() {
         }}
         size={30}
       />
+
       <ChartNoAxesCombined
         className="absolute text-muted-foreground/30 animate-float"
         style={{
@@ -38,6 +51,16 @@ export default function FloatingIcons() {
           animationDelay: "0s",
         }}
         size={30}
+      />
+
+      <ChartNoAxesCombined
+        className="absolute text-muted-foreground/24 animate-float"
+        style={{
+          top: "40%",
+          right: "10%",
+          animationDelay: "0.7s",
+        }}
+        size={36}
       />
     </div>
   );

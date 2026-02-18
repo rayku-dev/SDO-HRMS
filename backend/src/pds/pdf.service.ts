@@ -16,19 +16,28 @@ export class PDFService {
         process.cwd(),
         'src',
         'templates',
-        'CS-Form-No.-212-revised-Personal-Data-Sheet.pdf',
+        'ANNEX H-1 - CS Form No. 212 Revised 2025 - Personal Data Sheet.pdf',
       ),
       // Production path (when running from dist/)
-      path.join(process.cwd(), 'templates', 'CS-Form-No.-212-revised-Personal-Data-Sheet.pdf'),
+      path.join(
+        process.cwd(),
+        'templates',
+        'ANNEX H-1 - CS Form No. 212 Revised 2025 - Personal Data Sheet.pdf',
+      ),
       // Alternative: relative to __dirname
-      path.join(__dirname, '..', 'templates', 'CS-Form-No.-212-revised-Personal-Data-Sheet.pdf'),
+      path.join(
+        __dirname,
+        '..',
+        'templates',
+        'ANNEX H-1 - CS Form No. 212 Revised 2025 - Personal Data Sheet.pdf',
+      ),
       // Absolute path from project root
       path.join(
         process.cwd(),
         'backend',
         'src',
         'templates',
-        'CS-Form-No.-212-revised-Personal-Data-Sheet.pdf',
+        'ANNEX H-1 - CS Form No. 212 Revised 2025 - Personal Data Sheet.pdf',
       ),
     ];
 
@@ -47,7 +56,7 @@ export class PDFService {
     }
 
     if (!templatePath) {
-      const errorMessage = `PDF template not found. Searched in:\n${possiblePaths.join('\n')}\n\nPlease place CS-Form-No.-212-revised-Personal-Data-Sheet.pdf in one of these locations.`;
+      const errorMessage = `PDF template not found. Searched in:\n${possiblePaths.join('\n')}\n\nPlease place ANNEX H-1 - CS Form No. 212 Revised 2025 - Personal Data Sheet.pdf in one of these locations.`;
       console.error(errorMessage);
       throw new Error(errorMessage);
     }
