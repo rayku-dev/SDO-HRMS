@@ -7,6 +7,9 @@ frontend/out/
 # production
 frontend/build
 
+# upload
+backend/uploads/
+
 # debug
 frontend/npm-debug.log*
 frontend/yarn-debug.log*

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Upload, File, Trash2, Grid, List, FolderOpen } from "lucide-react";
+import { Upload, File, Trash2, Grid, List, FolderOpen, ExternalLink, Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -194,13 +194,36 @@ export default function Files201Page() {
                         {new Date(file.uploadedAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(file.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              files201Api.getFileBlobUrl(file.id).then((url) => {
+                                window.open(url, '_blank');
+                              });
+                            }}
+                            title="View File"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => files201Api.download(file.id, file.fileName)}
+                            title="Download File"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(file.id)}
+                            title="Delete File"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -230,15 +253,39 @@ export default function Files201Page() {
                     <div className="text-sm text-muted-foreground">
                       {new Date(file.uploadedAt).toLocaleDateString()}
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleDelete(file.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          files201Api.getFileBlobUrl(file.id).then((url) => {
+                            window.open(url, '_blank');
+                          });
+                        }}
+                        title="View File"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => files201Api.download(file.id, file.fileName)}
+                        title="Download File"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleDelete(file.id)}
+                        title="Delete File"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

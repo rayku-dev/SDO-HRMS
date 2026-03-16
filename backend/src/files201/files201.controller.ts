@@ -9,7 +9,9 @@ import {
   UploadedFile,
   Body,
   ForbiddenException,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Files201Service } from './files201.service';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
@@ -135,6 +137,31 @@ export class Files201Controller {
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: User) {
     return this.files201Service.findOne(id);
+  }
+
+  @Get(':id/download')
+  async downloadFile(@Param('id') id: string, @Res() res: Response, @CurrentUser() user: User) {
+    const file = await this.files201Service.findOne(id);
+    
+    if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && file.accountId !== user.id) {
+      throw new ForbiddenException('You can only download your own files');
+    }
+
+    const filePath = path.join(process.cwd(), 'uploads', 'files201', file.filePath);
+    return res.download(filePath, file.fileName);
+  }
+
+  @Get(':id/view')
+  async viewFile(@Param('id') id: string, @Res() res: Response, @CurrentUser() user: User) {
+    const file = await this.files201Service.findOne(id);
+    
+    if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && file.accountId !== user.id) {
+      throw new ForbiddenException('You can only view your own files');
+    }
+
+    const filePath = path.join(process.cwd(), 'uploads', 'files201', file.filePath);
+    res.setHeader('Content-Type', file.mimeType);
+    return res.sendFile(filePath);
   }
 
   @Delete(':id')

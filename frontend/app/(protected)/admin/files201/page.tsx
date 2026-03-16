@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Search, Eye, Trash2 } from "lucide-react";
+import { Search, Eye, Trash2, Download, ExternalLink } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -198,7 +198,7 @@ export default function Files201ManagementPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
+                          <DialogContent className="max-w-xl md:max-w-4xl lg:max-w-5xl w-[95vw]">
                             <DialogHeader>
                               <DialogTitle>User Files</DialogTitle>
                               <DialogDescription>
@@ -211,9 +211,30 @@ export default function Files201ManagementPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(file.id)}
+                          onClick={() => {
+                            files201Api.getFileBlobUrl(file.id).then((url) => {
+                              window.open(url, '_blank');
+                            });
+                          }}
+                          title="View File"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => files201Api.download(file.id, file.fileName)}
+                          title="Download File"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(file.id)}
+                          title="Delete File"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>
@@ -259,16 +280,42 @@ function UserFilesView({ accountId }: { accountId: string }) {
       {files.map((file) => (
         <div
           key={file.id}
-          className="flex items-center justify-between p-2 border rounded"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 border rounded-xl bg-card"
         >
-          <div>
-            <div className="font-medium">{file.fileName}</div>
-            <div className="text-sm text-muted-foreground">
+          <div className="min-w-0 flex-1 pr-4">
+            <div className="font-medium truncate" title={file.fileName}>{file.fileName}</div>
+            <div className="text-sm text-muted-foreground truncate">
               {file.category || (file as any).fileCategory?.name || "Uncategorized"} • {formatFileSize(file.fileSize)}
             </div>
           </div>
-          <div className="text-sm text-muted-foreground">
-            {new Date(file.uploadedAt).toLocaleDateString()}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="text-sm text-muted-foreground mr-2">
+              {new Date(file.uploadedAt).toLocaleDateString()}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                files201Api.getFileBlobUrl(file.id).then((url) => {
+                  window.open(url, '_blank');
+                });
+              }}
+              className="h-8"
+              title="View File"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => files201Api.download(file.id, file.fileName)}
+              className="h-8 shadow-none border-none"
+              title="Download File"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
           </div>
         </div>
       ))}
