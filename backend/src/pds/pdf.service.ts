@@ -274,8 +274,6 @@ export class PDFService {
             const toField = form.getTextField(`workTo${index + 1}`);
             const positionField = form.getTextField(`workPosition${index + 1}`);
             const deptField = form.getTextField(`workDepartment${index + 1}`);
-            const salaryField = form.getTextField(`workMonthlySalary${index + 1}`);
-            const gradeField = form.getTextField(`workSalary${index + 1}`);
             const statusField = form.getTextField(`workStatus${index + 1}`);
             const govtField = form.getTextField(`workGovt${index + 1}`);
 
@@ -283,8 +281,6 @@ export class PDFService {
             if (work.to) toField.setText(this.formatDateToMMDDYYYY(work.to));
             if (work.positionTitle) positionField.setText(work.positionTitle);
             if (work.department) deptField.setText(work.department);
-            if (work.monthlySalary) salaryField.setText(String(work.monthlySalary));
-            if (work.salaryGrade) gradeField.setText(work.salaryGrade);
             if (work.statusOfAppointment) statusField.setText(work.statusOfAppointment);
             if (work.governmentService) govtField.setText(work.governmentService);
           } catch {}

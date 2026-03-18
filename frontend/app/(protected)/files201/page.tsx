@@ -199,9 +199,13 @@ export default function Files201Page() {
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                              files201Api.getFileBlobUrl(file.id).then((url) => {
-                                window.open(url, '_blank');
-                              });
+                              files201Api.getFileBlobUrl(file.id)
+                                .then((url) => {
+                                  window.open(url, '_blank');
+                                })
+                                .catch((error) => {
+                                  toast.error("File not found or cannot be viewed.");
+                                });
                             }}
                             title="View File"
                           >
@@ -259,9 +263,13 @@ export default function Files201Page() {
                         size="sm"
                         className="flex-1"
                         onClick={() => {
-                          files201Api.getFileBlobUrl(file.id).then((url) => {
-                            window.open(url, '_blank');
-                          });
+                          files201Api.getFileBlobUrl(file.id)
+                            .then((url) => {
+                              window.open(url, '_blank');
+                            })
+                            .catch((error) => {
+                              toast.error("File not found or cannot be viewed.");
+                            });
                         }}
                         title="View File"
                       >

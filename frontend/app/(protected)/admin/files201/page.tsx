@@ -212,9 +212,13 @@ export default function Files201ManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            files201Api.getFileBlobUrl(file.id).then((url) => {
-                              window.open(url, '_blank');
-                            });
+                            files201Api.getFileBlobUrl(file.id)
+                              .then((url) => {
+                                window.open(url, '_blank');
+                              })
+                              .catch((error) => {
+                                toast.error("File not found or cannot be viewed.");
+                              });
                           }}
                           title="View File"
                         >
@@ -296,9 +300,13 @@ function UserFilesView({ accountId }: { accountId: string }) {
               variant="outline"
               size="sm"
               onClick={() => {
-                files201Api.getFileBlobUrl(file.id).then((url) => {
-                  window.open(url, '_blank');
-                });
+                files201Api.getFileBlobUrl(file.id)
+                  .then((url) => {
+                    window.open(url, '_blank');
+                  })
+                  .catch((error) => {
+                    toast.error("File not found or cannot be viewed.");
+                  });
               }}
               className="h-8"
               title="View File"

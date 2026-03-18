@@ -79,8 +79,6 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
         to: "",
         positionTitle: "",
         department: "",
-        monthlySalary: "",
-        salaryGrade: "",
         statusOfAppointment: "",
         governmentService: "",
       },
@@ -1148,37 +1146,6 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                           />
                         </div>
                         <div>
-                          <Label>Monthly Salary</Label>
-                          <Input
-                            {...register(
-                              `workExperienceData.workExperience.${index}.monthlySalary` as const
-                            )}
-                          />
-                        </div>
-                        <div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Label className="flex items-center gap-2">
-                                Salary Grade
-                                <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                              </Label>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="top"
-                              className="max-w-xs text-sm leading-snug"
-                            >
-                              Salary / Job / Pay grade (if applicable) & STEP
-                              (Format "00-0")/ From Increment
-                            </TooltipContent>
-                          </Tooltip>
-                          <Input
-                            {...register(
-                              `workExperienceData.workExperience.${index}.salaryGrade` as const
-                            )}
-                          />
-                        </div>
-
-                        <div>
                           <Label>Status of Appointment</Label>
                           <Input
                             {...register(
@@ -1607,7 +1574,7 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                           onValueChange={(value) =>
                             setValue(
                               "lastpData.answers.0.value",
-                              value === "Yes" ? "Yes" : "No"
+                              value === "Yes" ? "Yes" : "No",
                             )
                           }
                           className="flex flex-row gap-6"
@@ -1639,12 +1606,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                         </Label>
                         <RadioGroup
                           value={formData.lastpData?.answers?.[1]?.value || ""}
-                          onValueChange={(value) =>
-                            setValue(
-                              "lastpData.answers.1.value",
-                              value === "Yes" ? "Yes" : "No"
-                            )
-                          }
+                          onValueChange={(value) => {
+                            setValue("lastpData.answers.1.value", value);
+                            if (value === "No") {
+                              setValue("lastpData.answers.1.details", ""); // reset details field
+                            }
+                          }}
                           className="flex flex-row gap-6"
                         >
                           <div className="flex items-center space-x-2">
@@ -1693,12 +1660,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[2]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.2.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.2.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.2.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -1736,12 +1703,14 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[3]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.3.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.3.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.3.details", "");
+                          setValue("lastpData.answers.3.dateFiled", "");
+                          setValue("lastpData.answers.3.status", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -1807,12 +1776,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[4]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.4.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.4.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.4.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -1862,12 +1831,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[5]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.5.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.5.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.5.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -1915,12 +1884,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[6]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.6.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.6.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.6.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -1961,12 +1930,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[7]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.7.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.7.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.7.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -2013,12 +1982,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[8]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.8.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.8.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.8.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -2067,12 +2036,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[9]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.9.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.9.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.9.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -2110,12 +2079,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[10]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.10.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.10.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.10.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -2153,12 +2122,12 @@ export function PdsForm({ initialData, onSave, isLoading }: PdsFormProps) {
                     </Label>
                     <RadioGroup
                       value={formData.lastpData?.answers?.[11]?.value || ""}
-                      onValueChange={(value) =>
-                        setValue(
-                          "lastpData.answers.11.value",
-                          value === "Yes" ? "Yes" : "No"
-                        )
-                      }
+                      onValueChange={(value) => {
+                        setValue("lastpData.answers.11.value", value);
+                        if (value === "No") {
+                          setValue("lastpData.answers.11.details", ""); // reset details field
+                        }
+                      }}
                       className="flex flex-row gap-6"
                     >
                       <div className="flex items-center space-x-2">

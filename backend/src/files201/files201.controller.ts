@@ -134,11 +134,6 @@ export class Files201Controller {
     return this.files201Service.getFileStats(accountId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.files201Service.findOne(id);
-  }
-
   @Get(':id/download')
   async downloadFile(@Param('id') id: string, @Res() res: Response, @CurrentUser() user: User) {
     const file = await this.files201Service.findOne(id);
@@ -162,6 +157,11 @@ export class Files201Controller {
     const filePath = path.join(process.cwd(), 'uploads', 'files201', file.filePath);
     res.setHeader('Content-Type', file.mimeType);
     return res.sendFile(filePath);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.files201Service.findOne(id);
   }
 
   @Delete(':id')
