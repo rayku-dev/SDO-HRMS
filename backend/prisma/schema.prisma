@@ -28,6 +28,7 @@ model Account {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  refreshTokens           RefreshToken[]
   sessions                Session[]
   pds                     Pds?
   staffProfile            StaffProfile?
@@ -195,16 +196,42 @@ model FileCategory {
 }
 
 
-model Session {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  refreshToken String   @unique @map("refresh_token")
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+// Layer 2: Refresh Tokens (long-lived, stored in DB for revocation)
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique @map("token")
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  userAgent String?  @map("user_agent")
+  ipAddress String?  @map("ip_address")
 
   account Account @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// Layer 3: Sessions (server-side session tracking for extra security)
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  sessionToken String   @unique @map("session_token")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastActiveAt DateTime @default(now()) @map("last_active_at")
+  userAgent    String?  @map("user_agent")
+  ipAddress    String?  @map("ip_address")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  account Account @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
   @@map("sessions")
 }
 

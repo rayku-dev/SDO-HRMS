@@ -8,6 +8,7 @@ import {
   UseGuards,
   Get,
   Body,
+  Headers,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
@@ -45,23 +46,49 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @ApiResponse({ status: 200, description: 'User logged in, returns access + refresh tokens' })
+  @ApiResponse({ status: 200, description: 'User logged in, returns access + refresh tokens in cookies' })
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
-    const result = await this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto, 
+    @Res({ passthrough: true }) response: Response,
+    @Headers('user-agent') userAgent: string,
+    @Req() request: Request
+  ) {
+    const ipAddress = (request.headers['x-forwarded-for'] as string) || request.ip;
+    const result = await this.authService.login(loginDto, userAgent, ipAddress);
 
-    // ✅ Set refresh token in httpOnly cookie
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Layer 1: Access Token
+    response.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000, // 2h
+      path: '/',
+    });
+
+    // Layer 2: Refresh Token
     response.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/',
+    });
+
+    // Layer 3: Session Token
+    response.cookie('sessionToken', result.sessionToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/',
     });
 
     return {
       user: result.user,
-      accessToken: result.accessToken,
     };
   }
 
@@ -71,52 +98,69 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Refreshes access token using cookie' })
   @Throttle({ default: { limit: 10, ttl: 300000 } }) // 10 requests per 5 minutes
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+  async refresh(
+    @Req() request: Request, 
+    @Res({ passthrough: true }) response: Response,
+    @Headers('user-agent') userAgent: string
+  ) {
     const refreshToken = request.cookies?.refreshToken;
+    const ipAddress = (request.headers['x-forwarded-for'] as string) || request.ip;
 
     try {
-      const result = await this.authService.refreshTokens(refreshToken);
+      const result = await this.authService.refreshTokens(refreshToken, userAgent, ipAddress);
 
-      // ✅ Update refresh token cookie
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      // Update cookies
+      response.cookie('accessToken', result.accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 2 * 60 * 60 * 1000,
+        path: '/',
+      });
+
       response.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: '/',
       });
 
       return {
         user: result.user,
-        accessToken: result.accessToken,
       };
     } catch (error) {
-      // Clear cookie on failure
       console.error('Refresh failed:', error.message);
+      response.clearCookie('accessToken');
       response.clearCookie('refreshToken');
+      response.clearCookie('sessionToken');
       throw error;
     }
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  @ApiBearerAuth('access-token') // requires JWT
-  @ApiCookieAuth('refresh-token') // clears refresh cookie
-  @ApiResponse({ status: 200, description: 'Logs out user and clears refresh token' })
   @HttpCode(HttpStatus.OK)
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken = request.cookies?.refreshToken;
+    const sessionToken = request.cookies?.sessionToken;
+    
+    response.clearCookie('accessToken');
     response.clearCookie('refreshToken');
-    return this.authService.logout(refreshToken);
+    response.clearCookie('sessionToken');
+    
+    return this.authService.logout(refreshToken, sessionToken);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('access-token') // requires JWT
-  @ApiCookieAuth('refresh-token') // clears refresh cookie
-  @ApiResponse({ status: 200, description: 'Logs out user and clears refresh token' })
   async logoutAll(@CurrentUser() user: User, @Res({ passthrough: true }) response: Response) {
+    response.clearCookie('accessToken');
     response.clearCookie('refreshToken');
+    response.clearCookie('sessionToken');
     return this.authService.logoutAll(user.id);
   }
 
@@ -126,7 +170,6 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Returns current user profile' })
   @Throttle({ default: { limit: 60, ttl: 60000 } }) // 60 requests per minute
   async getProfile(@CurrentUser() user: User) {
-    // User from JWT strategy is already safe (no password), just return it
     return { user };
   }
 }

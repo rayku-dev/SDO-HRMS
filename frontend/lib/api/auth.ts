@@ -1,5 +1,4 @@
 import api from "./api";
-import { tokenStorage } from "./tokenStorage";
 import { AuthResponse, User, AuthError } from "../../@types/auth";
 
 export async function login(
@@ -11,7 +10,6 @@ export async function login(
       email,
       password,
     });
-    tokenStorage.set(res.data.accessToken);
     return res.data;
   } catch (err: any) {
     throw new AuthError(
@@ -46,8 +44,14 @@ export async function register(
 export async function logout(): Promise<void> {
   try {
     await api.post("/auth/logout");
+  } catch (err) {
+    console.error("Logout API failed", err);
   } finally {
-    tokenStorage.remove();
+    // Rely on cookies being cleared by the backend
+    // and possible local state clearing here if needed
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   }
 }
 
@@ -56,7 +60,6 @@ export async function getCurrentUser(): Promise<User | null> {
     const res = await api.get<{ user: User }>("/auth/me");
     return res.data.user;
   } catch (err: any) {
-    // Optional: log or tag the error
     throw new AuthError(
       err.response?.data?.message || "Unable to fetch user",
       err.response?.status || 500
