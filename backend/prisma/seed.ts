@@ -1,5 +1,5 @@
 import { PrismaClient, Role } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcryptjs from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -7,14 +7,14 @@ async function main() {
   console.log('Seeding database...');
 
   // Hash passwords
-  const adminPassword = await bcrypt.hash('Admin@123', 10);
-  const approvingAuthorityPassword = await bcrypt.hash('ApprovingAuthority@123', 10);
-  const employeePassword = await bcrypt.hash('Employee@123', 10);
-  const hrAssociatePassword = await bcrypt.hash('HrAssociate@123', 10);
-  const hrHeadPassword = await bcrypt.hash('HrHead@123', 10);
-  const unitHeadPassword = await bcrypt.hash('UnitHead@123', 10);
-  const schoolPersonnelPassword = await bcrypt.hash('SchoolPersonnel@123', 10);
-  const regularPassword = await bcrypt.hash('Regular@123', 10);
+  const adminPassword = await bcryptjs.hash('Admin@123', 10);
+  const approvingAuthorityPassword = await bcryptjs.hash('ApprovingAuthority@123', 10);
+  const employeePassword = await bcryptjs.hash('Employee@123', 10);
+  const hrAssociatePassword = await bcryptjs.hash('HrAssociate@123', 10);
+  const hrHeadPassword = await bcryptjs.hash('HrHead@123', 10);
+  const unitHeadPassword = await bcryptjs.hash('UnitHead@123', 10);
+  const schoolPersonnelPassword = await bcryptjs.hash('SchoolPersonnel@123', 10);
+  const regularPassword = await bcryptjs.hash('Regular@123', 10);
 
   // Create admin account
   const admin = await prisma.account.upsert({

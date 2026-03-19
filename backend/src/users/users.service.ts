@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as bcryptjs from 'bcryptjs';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -25,7 +25,7 @@ export class UsersService {
       throw new ConflictException('Email is already in use');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptjs.hash(password, 10);
 
     const createdAccount = await this.prisma.$transaction(async (tx) => {
       const account = await tx.account.create({
@@ -340,7 +340,7 @@ export class UsersService {
       throw new NotFoundException('Account not found');
     }
 
-    const isPasswordValid = await bcrypt.compare(
+    const isPasswordValid = await bcryptjs.compare(
       changePasswordDto.currentPassword,
       account.password,
     );
@@ -349,7 +349,7 @@ export class UsersService {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+    const hashedPassword = await bcryptjs.hash(changePasswordDto.newPassword, 10);
 
     await this.prisma.account.update({
       where: { id: userId },

@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as bcryptjs from 'bcryptjs';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -37,7 +37,7 @@ export class AuthService {
         return null;
       }
 
-      const isPasswordValid = await bcrypt.compare(password, account.password);
+      const isPasswordValid = await bcryptjs.compare(password, account.password);
 
       if (!isPasswordValid) {
         return null;
@@ -67,7 +67,7 @@ export class AuthService {
         throw new ConflictException('Account with this email already exists');
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcryptjs.hash(password, 10);
 
       const account = await this.prisma.account.create({
         data: {
