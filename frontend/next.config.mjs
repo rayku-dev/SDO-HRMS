@@ -19,6 +19,17 @@ const nextConfig = {
     }
     return config;
   },
+  // Configure webhook payload size and proxying
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    return [
+      {
+        source: '/api/:path*',
+        // proxy to backend, remove trailing slash if any on env variable
+        destination: `${apiUrl.replace(/\/$/, '')}/:path*`, 
+      },
+    ];
+  },
 }
 
 export default nextConfig

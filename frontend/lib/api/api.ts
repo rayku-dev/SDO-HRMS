@@ -1,7 +1,9 @@
 import axios, { AxiosError } from "axios";
 import { AuthResponse } from "../../@types/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = typeof window !== "undefined" 
+  ? "/api" 
+  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 
 const api = axios.create({
   baseURL: API_URL,
