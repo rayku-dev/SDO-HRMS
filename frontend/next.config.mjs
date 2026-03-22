@@ -1,14 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-  // Configure webpack for react-pdf compatibility
+  typescript: { ignoreBuildErrors: true },
+  images: { unoptimized: true },
   webpack: (config, { isServer }) => {
-    // Fix for react-pdf
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -19,17 +13,16 @@ const nextConfig = {
     }
     return config;
   },
-  // Configure webhook payload size and proxying
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     return [
       {
         source: '/api/:path*',
-        // proxy to backend, remove trailing slash if any on env variable
-        destination: `${apiUrl.replace(/\/$/, '')}/:path*`, 
+        destination: `${apiUrl.replace(/\/$/, '')}/:path*`,
       },
     ];
   },
-}
+  turbopack: {}, // silences Turbopack error
+};
 
 export default nextConfig
