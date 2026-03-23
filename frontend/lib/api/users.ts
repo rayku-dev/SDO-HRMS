@@ -6,8 +6,20 @@ export interface CreateUserData {
   password?: string;
   firstName?: string;
   lastName?: string;
+  middleName?: string;
+  nameExtension?: string;
   role?: string;
   isActive?: boolean;
+  designation?: string;
+  appointmentDate?: string;
+  schedule?: string;
+  appointment?: string;
+  jobTitle?: string;
+  unit?: string;
+  supervisor?: string;
+  hrHead?: string;
+  approver?: string;
+  employeeNumber?: string;
 }
 
 export const usersApi = {

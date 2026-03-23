@@ -14,6 +14,7 @@ export interface User {
   lastName?: string | null;
   role: Role;
   isActive: boolean;
+  employeeNumber?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

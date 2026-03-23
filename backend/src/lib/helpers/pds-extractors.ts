@@ -16,7 +16,7 @@ export function extractUserData(pds: {
     firstName: personal.firstName || null,
     lastName: personal.surname || personal.lastName || null,
     middleName: personal.middleName || null,
-    suffix: personal.nameExtension || null,
+    nameExtension: personal.nameExtension || null,
     
     // Government IDs
     gsisId: personal.gsisId || null,

@@ -15,7 +15,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { email, password, firstName, lastName, role, isActive } = createUserDto;
+    const { email, password, role, isActive, ...profileData } = createUserDto;
 
     const existingAccount = await this.prisma.account.findUnique({
       where: { email },
@@ -25,7 +25,9 @@ export class UsersService {
       throw new ConflictException('Email is already in use');
     }
 
-    const hashedPassword = await bcryptjs.hash(password, 10);
+    const tempPassword = password || 'Welcome123!';
+    const hashedPassword = await bcryptjs.hash(tempPassword, 10);
+    const employeeNumber = profileData.employeeNumber || (await this.generateEmployeeNumber());
 
     const createdAccount = await this.prisma.$transaction(async (tx) => {
       const account = await tx.account.create({
@@ -36,8 +38,20 @@ export class UsersService {
           isActive: isActive !== undefined ? isActive : true,
           user: {
             create: {
-              firstName: firstName || null,
-              lastName: lastName || null,
+              firstName: profileData.firstName || null,
+              lastName: profileData.lastName || null,
+              middleName: profileData.middleName || null,
+              nameExtension: profileData.nameExtension || null,
+              designation: profileData.designation || null,
+              appointmentDate: profileData.appointmentDate ? new Date(profileData.appointmentDate) : null,
+              schedule: profileData.schedule || null,
+              appointment: profileData.appointment || null,
+              jobTitle: profileData.jobTitle || null,
+              unit: profileData.unit || null,
+              supervisor: profileData.supervisor || null,
+              hrHead: profileData.hrHead || null,
+              approver: profileData.approver || null,
+              employeeNumber,
             },
           },
         },
@@ -46,7 +60,44 @@ export class UsersService {
       return account;
     });
 
-    return this.findOne(createdAccount.id);
+    const user = await this.findOne(createdAccount.id);
+    return {
+      ...user,
+      temporaryPassword: tempPassword,
+    };
+  }
+
+  private async generateEmployeeNumber(): Promise<string> {
+    const now = new Date();
+    // Get year, month, day in YYMMDD format
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const datePrefix = `${year}${month}${day}`;
+
+    // Find the latest user created today with this prefix
+    const lastUser = await this.prisma.user.findFirst({
+      where: {
+        employeeNumber: {
+          startsWith: datePrefix,
+        },
+      },
+      orderBy: {
+        employeeNumber: 'desc',
+      },
+    });
+
+    let sequence = 1;
+    if (lastUser && lastUser.employeeNumber) {
+      // Extract the last 3 digits and increment
+      const lastSequence = parseInt(lastUser.employeeNumber.slice(-3));
+      if (!isNaN(lastSequence)) {
+        sequence = lastSequence + 1;
+      }
+    }
+
+    // Format as YYMMDDXXX
+    return `${datePrefix}${sequence.toString().padStart(3, '0')}`;
   }
 
   async importUsers(users: any[]) {
@@ -75,6 +126,17 @@ export class UsersService {
           password: user.password || 'Welcome123!',
           firstName: user.firstName,
           lastName: user.lastName,
+          middleName: user.middleName,
+          nameExtension: user.nameExtension,
+          designation: user.designation,
+          appointmentDate: user.appointmentDate,
+          schedule: user.schedule,
+          appointment: user.appointment,
+          jobTitle: user.jobTitle,
+          unit: user.unit,
+          supervisor: user.supervisor,
+          hrHead: user.hrHead,
+          approver: user.approver,
           role: role as any,
           isActive: true,
         });
@@ -100,12 +162,7 @@ export class UsersService {
   async findAll() {
     const accounts = await this.prisma.account.findMany({
       include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
+        user: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -113,15 +170,23 @@ export class UsersService {
     });
 
     return accounts.map((account) => {
+      const { password, ...accountInfo } = account;
       return {
-        id: account.id,
-        email: account.email,
+        ...accountInfo,
         firstName: account.user?.firstName || null,
         lastName: account.user?.lastName || null,
-        role: account.role,
-        isActive: account.isActive,
-        createdAt: account.createdAt,
-        updatedAt: account.updatedAt,
+        middleName: account.user?.middleName || null,
+        nameExtension: account.user?.nameExtension || null,
+        designation: account.user?.designation || null,
+        appointmentDate: account.user?.appointmentDate || null,
+        schedule: account.user?.schedule || null,
+        appointment: account.user?.appointment || null,
+        jobTitle: account.user?.jobTitle || null,
+        unit: account.user?.unit || null,
+        supervisor: account.user?.supervisor || null,
+        hrHead: account.user?.hrHead || null,
+        approver: account.user?.approver || null,
+        employeeNumber: account.user?.employeeNumber || null,
       };
     });
   }
@@ -138,15 +203,23 @@ export class UsersService {
       throw new NotFoundException('Account not found');
     }
 
+    const { password, ...accountInfo } = account;
     return {
-      id: account.id,
-      email: account.email,
+      ...accountInfo,
       firstName: account.user?.firstName || null,
       lastName: account.user?.lastName || null,
-      role: account.role,
-      isActive: account.isActive,
-      createdAt: account.createdAt,
-      updatedAt: account.updatedAt,
+      middleName: account.user?.middleName || null,
+      nameExtension: account.user?.nameExtension || null,
+      designation: account.user?.designation || null,
+      appointmentDate: account.user?.appointmentDate || null,
+      schedule: account.user?.schedule || null,
+      appointment: account.user?.appointment || null,
+      jobTitle: account.user?.jobTitle || null,
+      unit: account.user?.unit || null,
+      supervisor: account.user?.supervisor || null,
+      hrHead: account.user?.hrHead || null,
+      approver: account.user?.approver || null,
+      employeeNumber: account.user?.employeeNumber || null,
     };
   }
 
@@ -184,10 +257,32 @@ export class UsersService {
             update: {
               firstName: updateUserDto.firstName,
               lastName: updateUserDto.lastName,
+              middleName: updateUserDto.middleName,
+              nameExtension: updateUserDto.nameExtension,
+              designation: updateUserDto.designation,
+              appointmentDate: updateUserDto.appointmentDate ? new Date(updateUserDto.appointmentDate) : undefined,
+              schedule: updateUserDto.schedule,
+              appointment: updateUserDto.appointment,
+              jobTitle: updateUserDto.jobTitle,
+              unit: updateUserDto.unit,
+              supervisor: updateUserDto.supervisor,
+              hrHead: updateUserDto.hrHead,
+              approver: updateUserDto.approver,
             },
             create: {
-              firstName: updateUserDto.firstName,
-              lastName: updateUserDto.lastName,
+              firstName: updateUserDto.firstName || null,
+              lastName: updateUserDto.lastName || null,
+              middleName: updateUserDto.middleName || null,
+              nameExtension: updateUserDto.nameExtension || null,
+              designation: updateUserDto.designation || null,
+              appointmentDate: updateUserDto.appointmentDate ? new Date(updateUserDto.appointmentDate) : null,
+              schedule: updateUserDto.schedule || null,
+              appointment: updateUserDto.appointment || null,
+              jobTitle: updateUserDto.jobTitle || null,
+              unit: updateUserDto.unit || null,
+              supervisor: updateUserDto.supervisor || null,
+              hrHead: updateUserDto.hrHead || null,
+              approver: updateUserDto.approver || null,
             },
           },
         },

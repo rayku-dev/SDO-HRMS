@@ -45,7 +45,7 @@ model User {
   firstName  String? @map("first_name")
   lastName   String? @map("last_name")
   middleName String? @map("middle_name")
-  suffix     String? @map("name_extension")
+  nameExtension     String? @map("name_extension")
 
   // Government Identifiers
   gsisId       String? @map("gsis_number")
@@ -63,14 +63,12 @@ model User {
   telephoneNumber String? @map("telephone_number")
 
   // Station and Assignment SDO
-  jobTitle       String? @map("position")
+  jobTitle       String? @map("job_title")
   unit           String? @map("unit")
   hrHead         String? @map("hr_head")
-  hrAssistant    String? @map("hr_assistant")
-  subUnitManager String? @map("sub_unit_manager")
   supervisor     String? @map("supervisor")
-  approver       String? @map("approving_authority")
-  schedule       String? @map("work_schedule")
+  approver       String? @map("approver")
+  schedule       String? @map("schedule")
   employeeNumber String? @unique @map("employee_number")
 
   // Station and Assignment School

@@ -58,7 +58,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const { email, password, firstName, lastName } = registerDto;
+    const { email, password, firstName, lastName, middleName, nameExtension } = registerDto;
 
     try {
       const existingAccount = await this.prisma.account.findUnique({ where: { email } });
@@ -83,20 +83,22 @@ export class AuthService {
       });
 
       // Create profile (User)
-      if (firstName || lastName) {
-        await this.prisma.user.create({
-          data: {
-            accountId: account.id,
-            firstName: firstName || null,
-            lastName: lastName || null,
-          },
-        });
-      }
+      await this.prisma.user.create({
+        data: {
+          accountId: account.id,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          middleName: middleName || null,
+          nameExtension: nameExtension || null,
+        },
+      });
 
       return {
         ...account,
         firstName,
         lastName,
+        middleName,
+        nameExtension,
       };
     } catch (error) {
       if (error?.code?.startsWith('P10') || error?.message?.includes('connect')) {
@@ -151,6 +153,8 @@ export class AuthService {
         email: account.email,
         firstName: profile.firstName,
         lastName: profile.lastName,
+        middleName: profile.middleName,
+        nameExtension: profile.nameExtension,
         role: account.role,
       },
       ...tokens,
@@ -167,12 +171,14 @@ export class AuthService {
     });
 
     if (!account || !account.user) {
-      return { firstName: null, lastName: null };
+      return { firstName: null, lastName: null, middleName: null, nameExtension: null };
     }
 
     return {
       firstName: account.user.firstName,
       lastName: account.user.lastName,
+      middleName: account.user.middleName,
+      nameExtension: account.user.nameExtension,
     };
   }
 
