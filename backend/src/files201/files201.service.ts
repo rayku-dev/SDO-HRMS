@@ -71,24 +71,10 @@ export class Files201Service {
             id: true,
             email: true,
             role: true,
-            staffProfile: {
-              include: {
-                staffData: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
-              },
-            },
-            schoolPersonnelProfile: {
-              include: {
-                schoolPersonnelData: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
               },
             },
           },

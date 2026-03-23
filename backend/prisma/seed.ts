@@ -14,7 +14,6 @@ async function main() {
   const hrHeadPassword = await bcryptjs.hash('HrHead@123', 10);
   const unitHeadPassword = await bcryptjs.hash('UnitHead@123', 10);
   const schoolPersonnelPassword = await bcryptjs.hash('SchoolPersonnel@123', 10);
-  const regularPassword = await bcryptjs.hash('Regular@123', 10);
 
   // Create admin account
   const admin = await prisma.account.upsert({
@@ -25,16 +24,12 @@ async function main() {
       password: adminPassword,
       role: Role.ADMIN,
       isActive: true,
-      staffProfile: {
+      user: {
         create: {
-          staffData: {
-            create: {
-              firstName: 'Admin',
-              lastName: 'User',
-              position: 'System Administrator',
-              department: 'IT',
-            },
-          },
+          firstName: 'Admin',
+          lastName: 'User',
+          jobTitle: 'System Administrator',
+          unit: 'IT',
         },
       },
     },
@@ -49,16 +44,12 @@ async function main() {
       password: approvingAuthorityPassword,
       role: Role.APPROVING_AUTHORITY,
       isActive: true,
-      staffProfile: {
+      user: {
         create: {
-          staffData: {
-            create: {
-              firstName: 'Approving',
-              lastName: 'Authority',
-              position: 'Department Head',
-              department: 'Administration',
-            },
-          },
+          firstName: 'Approving',
+          lastName: 'Authority',
+          jobTitle: 'Department Head',
+          unit: 'Administration',
         },
       },
     },
@@ -73,16 +64,12 @@ async function main() {
       password: employeePassword,
       role: Role.EMPLOYEE,
       isActive: true,
-      staffProfile: {
+      user: {
         create: {
-          staffData: {
-            create: {
-              firstName: 'Employee',
-              lastName: 'User',
-              position: 'Staff',
-              department: 'Operations',
-            },
-          },
+          firstName: 'Employee',
+          lastName: 'User',
+          jobTitle: 'Staff',
+          unit: 'Operations',
         },
       },
     },
@@ -97,16 +84,12 @@ async function main() {
       password: hrAssociatePassword,
       role: Role.HR_ASSOCIATE,
       isActive: true,
-      staffProfile: {
+      user: {
         create: {
-          staffData: {
-            create: {
-              firstName: 'HR',
-              lastName: 'Associate',
-              position: 'HR Associate',
-              department: 'Human Resources',
-            },
-          },
+          firstName: 'HR',
+          lastName: 'Associate',
+          jobTitle: 'HR Associate',
+          unit: 'Human Resources',
         },
       },
     },
@@ -121,16 +104,12 @@ async function main() {
       password: hrHeadPassword,
       role: Role.HR_HEAD,
       isActive: true,
-      staffProfile: {
+      user: {
         create: {
-          staffData: {
-            create: {
-              firstName: 'HR',
-              lastName: 'Head',
-              position: 'HR Head',
-              department: 'Human Resources',
-            },
-          },
+          firstName: 'HR',
+          lastName: 'Head',
+          jobTitle: 'HR Head',
+          unit: 'Human Resources',
         },
       },
     },
@@ -145,16 +124,12 @@ async function main() {
       password: unitHeadPassword,
       role: Role.UNIT_HEAD,
       isActive: true,
-      staffProfile: {
+      user: {
         create: {
-          staffData: {
-            create: {
-              firstName: 'Unit',
-              lastName: 'Head',
-              position: 'Unit Head',
-              department: 'Operations',
-            },
-          },
+          firstName: 'Unit',
+          lastName: 'Head',
+          jobTitle: 'Unit Head',
+          unit: 'Operations',
         },
       },
     },
@@ -169,16 +144,12 @@ async function main() {
       password: schoolPersonnelPassword,
       role: Role.SCHOOL_PERSONNEL,
       isActive: true,
-      schoolPersonnelProfile: {
+      user: {
         create: {
-          schoolPersonnelData: {
-            create: {
-              firstName: 'School',
-              lastName: 'Personnel',
-              station: 'Main Campus',
-              appointment: 'Permanent',
-            },
-          },
+          firstName: 'School',
+          lastName: 'Personnel',
+          designation: 'Main Campus',
+          appointment: 'Permanent',
         },
       },
     },
@@ -202,18 +173,6 @@ async function main() {
   }
   console.log('✅ File categories seeded');
 
-  // Create regular account
-  const regular = await prisma.account.upsert({
-    where: { email: 'regular@example.com' },
-    update: {},
-    create: {
-      email: 'regular@example.com',
-      password: regularPassword,
-      role: Role.REGULAR,
-      isActive: true,
-    },
-  });
-
   console.log('✅ Database seeded successfully!');
   console.log('Admin:', { email: admin.email, password: 'Admin@123' });
   console.log('Approving Authority:', {
@@ -228,7 +187,6 @@ async function main() {
     email: schoolPersonnel.email,
     password: 'SchoolPersonnel@123',
   });
-  console.log('Regular:', { email: regular.email, password: 'Regular@123' });
 }
 
 main()

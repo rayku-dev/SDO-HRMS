@@ -32,36 +32,16 @@ export class UsersService {
         data: {
           email,
           password: hashedPassword,
-          role: role || 'REGULAR',
+          role: role || 'EMPLOYEE',
           isActive: isActive !== undefined ? isActive : true,
+          user: {
+            create: {
+              firstName: firstName || null,
+              lastName: lastName || null,
+            },
+          },
         },
       });
-
-      if (role === 'SCHOOL_PERSONNEL') {
-        await tx.schoolPersonnelProfile.create({
-          data: {
-            accountId: account.id,
-            schoolPersonnelData: {
-              create: {
-                firstName: firstName || null,
-                lastName: lastName || null,
-              },
-            },
-          },
-        });
-      } else if (role !== 'REGULAR') {
-        await tx.staffProfile.create({
-          data: {
-            accountId: account.id,
-            staffData: {
-              create: {
-                firstName: firstName || null,
-                lastName: lastName || null,
-              },
-            },
-          },
-        });
-      }
 
       return account;
     });
@@ -81,7 +61,7 @@ export class UsersService {
     for (const user of users) {
       try {
         console.log(`[UsersService] Processing user: ${user.email}`);
-        
+
         // Normalize role for Prisma enum compatibility
         let role = user.role || 'SCHOOL_PERSONNEL';
         if (typeof role === 'string') {
@@ -111,31 +91,19 @@ export class UsersService {
       }
     }
 
-    console.log(`[UsersService] Import finished. Success: ${results.success}, Failed: ${results.failed}`);
+    console.log(
+      `[UsersService] Import finished. Success: ${results.success}, Failed: ${results.failed}`,
+    );
     return results;
   }
 
   async findAll() {
     const accounts = await this.prisma.account.findMany({
       include: {
-        staffProfile: {
-          include: {
-            staffData: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-        schoolPersonnelProfile: {
-          include: {
-            schoolPersonnelData: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
           },
         },
       },
@@ -145,20 +113,11 @@ export class UsersService {
     });
 
     return accounts.map((account) => {
-      const firstName =
-        account.staffProfile?.staffData?.firstName ||
-        account.schoolPersonnelProfile?.schoolPersonnelData?.firstName ||
-        null;
-      const lastName =
-        account.staffProfile?.staffData?.lastName ||
-        account.schoolPersonnelProfile?.schoolPersonnelData?.lastName ||
-        null;
-
       return {
         id: account.id,
         email: account.email,
-        firstName,
-        lastName,
+        firstName: account.user?.firstName || null,
+        lastName: account.user?.lastName || null,
         role: account.role,
         isActive: account.isActive,
         createdAt: account.createdAt,
@@ -171,16 +130,7 @@ export class UsersService {
     const account = await this.prisma.account.findUnique({
       where: { id },
       include: {
-        staffProfile: {
-          include: {
-            staffData: true,
-          },
-        },
-        schoolPersonnelProfile: {
-          include: {
-            schoolPersonnelData: true,
-          },
-        },
+        user: true,
       },
     });
 
@@ -188,20 +138,11 @@ export class UsersService {
       throw new NotFoundException('Account not found');
     }
 
-    const firstName =
-      account.staffProfile?.staffData?.firstName ||
-      account.schoolPersonnelProfile?.schoolPersonnelData?.firstName ||
-      null;
-    const lastName =
-      account.staffProfile?.staffData?.lastName ||
-      account.schoolPersonnelProfile?.schoolPersonnelData?.lastName ||
-      null;
-
     return {
       id: account.id,
       email: account.email,
-      firstName,
-      lastName,
+      firstName: account.user?.firstName || null,
+      lastName: account.user?.lastName || null,
       role: account.role,
       isActive: account.isActive,
       createdAt: account.createdAt,
@@ -213,7 +154,7 @@ export class UsersService {
     const account = await this.prisma.account.findUnique({
       where: { id },
       include: {
-        schoolPersonnelProfile: true,
+        user: true,
       },
     });
 
@@ -231,92 +172,27 @@ export class UsersService {
       }
     }
 
-    // Update account
+    // Update account and user (profile) together
     await this.prisma.account.update({
       where: { id },
       data: {
         email: updateUserDto.email,
         role: updateUserDto.role,
         isActive: updateUserDto.isActive,
+        user: {
+          upsert: {
+            update: {
+              firstName: updateUserDto.firstName,
+              lastName: updateUserDto.lastName,
+            },
+            create: {
+              firstName: updateUserDto.firstName,
+              lastName: updateUserDto.lastName,
+            },
+          },
+        },
       },
     });
-
-    // Update profile if firstName/lastName provided
-    if (updateUserDto.firstName || updateUserDto.lastName) {
-      if (account.role === 'SCHOOL_PERSONNEL') {
-        // Check if school personnel profile exists
-        const schoolPersonnelProfile = await this.prisma.schoolPersonnelProfile.findUnique({
-          where: { accountId: id },
-        });
-
-        if (schoolPersonnelProfile) {
-          // Update existing school personnel data or create if doesn't exist
-          await this.prisma.schoolPersonnelData.upsert({
-            where: {
-              schoolPersonnelProfileId: schoolPersonnelProfile.id,
-            },
-            update: {
-              firstName: updateUserDto.firstName,
-              lastName: updateUserDto.lastName,
-            },
-            create: {
-              schoolPersonnelProfileId: schoolPersonnelProfile.id,
-              firstName: updateUserDto.firstName,
-              lastName: updateUserDto.lastName,
-            },
-          });
-        } else {
-          // Create school personnel profile and data
-          const newSchoolPersonnelProfile = await this.prisma.schoolPersonnelProfile.create({
-            data: {
-              accountId: id,
-              schoolPersonnelData: {
-                create: {
-                  firstName: updateUserDto.firstName,
-                  lastName: updateUserDto.lastName,
-                },
-              },
-            },
-          });
-        }
-      } else {
-        // For staff roles (not SCHOOL_PERSONNEL)
-        const staffProfile = await this.prisma.staffProfile.findUnique({
-          where: { accountId: id },
-        });
-
-        if (staffProfile) {
-          // Update existing staff data or create if doesn't exist
-          await this.prisma.staffData.upsert({
-            where: {
-              staffProfileId: staffProfile.id,
-            },
-            update: {
-              firstName: updateUserDto.firstName,
-              lastName: updateUserDto.lastName,
-            },
-            create: {
-              staffProfileId: staffProfile.id,
-              firstName: updateUserDto.firstName,
-              lastName: updateUserDto.lastName,
-            },
-          });
-        } else {
-          // Create staff profile and data
-          await this.prisma.staffProfile.create({
-            data: {
-              accountId: id,
-              staffData: {
-                create: {
-                  firstName: updateUserDto.firstName,
-                  lastName: updateUserDto.lastName,
-                },
-              },
-            },
-          });
-        }
-      }
-    }
 
     return this.findOne(id);
   }

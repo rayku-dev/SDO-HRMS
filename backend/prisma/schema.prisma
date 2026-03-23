@@ -10,12 +10,11 @@ datasource db {
 enum Role {
   ADMIN
   APPROVING_AUTHORITY
-  EMPLOYEE
   HR_ASSOCIATE
   HR_HEAD
   UNIT_HEAD
+  EMPLOYEE
   SCHOOL_PERSONNEL
-  REGULAR
 }
 
 // Account model - base auth layer
@@ -23,160 +22,92 @@ model Account {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
-  role      Role     @default(REGULAR)
+  role      Role     @default(EMPLOYEE)
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  refreshTokens           RefreshToken[]
-  sessions                Session[]
-  pds                     Pds?
-  staffProfile            StaffProfile?
-  schoolPersonnelProfile  SchoolPersonnelProfile?
-  files201                File201[]
+  refreshTokens RefreshToken[]
+  sessions      Session[]
+  pds           Pds?
+  user          User?
+  files201      File201[]
 
   @@map("accounts")
 }
 
-// Staff Profile - for Admin, HR, Employee, Unit Head, Approving Authority roles
-model StaffProfile {
-  id        String   @id @default(uuid())
-  accountId String   @unique @map("account_id")
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  
-  staffData StaffData?
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+// User Profile - Merged from StaffData and SchoolPersonnelData
+model User {
+  id        String  @id @default(uuid())
+  accountId String  @unique @map("account_id")
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@map("staff_profiles")
-}
+  firstName  String? @map("first_name")
+  lastName   String? @map("last_name")
+  middleName String? @map("middle_name")
+  suffix     String? @map("name_extension")
 
-// Staff Data - normalized staff information
-model StaffData {
-  id              String   @id @default(uuid())
-  staffProfileId  String   @unique @map("staff_profile_id")
-  staffProfile    StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
-  
-  firstName       String?  @map("first_name")
-  lastName        String?  @map("last_name")
-  middleName      String?  @map("middle_name")
-  dateOfBirth     DateTime? @map("date_of_birth")
-  placeOfBirth    String?  @map("place_of_birth")
-  sex             String?
-  civilStatus     String?  @map("civil_status")
-  address         String?
-  phoneNumber     String?  @map("phone_number")
-  position        String?
-  department      String?
-  employeeNumber  String?  @unique @map("employee_number")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  // Government Identifiers
+  gsisId       String? @map("gsis_number")
+  pagibigId    String? @map("pagibig_number")
+  philhealthId String? @map("philhealth_number")
+  sssId        String? @map("sss_number")
+  tinId        String? @map("tin_number")
 
-  @@map("staff_data")
-}
-
-// School Personnel Profile - for School Personnel role
-model SchoolPersonnelProfile {
-  id        String   @id @default(uuid())
-  accountId String   @unique @map("account_id")
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  
-  schoolPersonnelData SchoolPersonnelData?
-  eligibilities Eligibility[]
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("school_personnel_profiles")
-}
-
-// School Personnel Data - normalized school personnel information
-model SchoolPersonnelData {
-  id                      String   @id @default(uuid())
-  schoolPersonnelProfileId String  @unique @map("school_personnel_profile_id")
-  schoolPersonnelProfile  SchoolPersonnelProfile @relation(fields: [schoolPersonnelProfileId], references: [id], onDelete: Cascade)
-  
-  firstName       String?  @map("first_name")
-  lastName        String?  @map("last_name")
-  middleName      String?  @map("middle_name")
-  nameExtension   String?  @map("name_extension")
-  dateOfBirth     DateTime? @map("date_of_birth")
-  placeOfBirth    String?  @map("place_of_birth")
-  sex             String?
-  civilStatus     String?  @map("civil_status")
-  height          String?
-  weight          String?
-  bloodType       String?  @map("blood_type")
-  
-  // Government IDs
-  gsisId          String?  @map("gsis_id")
-  pagibigId       String?  @map("pagibig_id")
-  philhealthId   String?  @map("philhealth_id")
-  sssId           String?  @map("sss_id")
-  tin             String?
-  agencyEmployeeNo String? @map("agency_employee_no")
-  
   // Addresses
   residentialAddress Json? @map("residential_address")
   permanentAddress   Json? @map("permanent_address")
-  
+
   // Contact
-  telephoneNo     String?  @map("telephone_no")
-  mobileNo        String?  @map("mobile_no")
-  email           String?
-  
-  // Station and Appointment
-  station         String?
-  appointment     String?
+  phoneNumber     String? @map("phone_number")
+  telephoneNumber String? @map("telephone_number")
+
+  // Station and Assignment SDO
+  jobTitle       String? @map("position")
+  unit           String? @map("unit")
+  hrHead         String? @map("hr_head")
+  hrAssistant    String? @map("hr_assistant")
+  subUnitManager String? @map("sub_unit_manager")
+  supervisor     String? @map("supervisor")
+  approver       String? @map("approving_authority")
+  schedule       String? @map("work_schedule")
+  employeeNumber String? @unique @map("employee_number")
+
+  // Station and Assignment School
+  designation     String? // SDO || School
+  appointment     String? // JO, Nation, Casual
   appointmentDate DateTime? @map("appointment_date")
-  
+
+  // Signing
+  signature String?
+  initial   String?
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("school_personnel_data")
-}
-
-// Eligibility - multiple civil service eligibilities per school personnel
-model Eligibility {
-  id                      String   @id @default(uuid())
-  schoolPersonnelProfileId String  @map("school_personnel_profile_id")
-  schoolPersonnelProfile  SchoolPersonnelProfile @relation(fields: [schoolPersonnelProfileId], references: [id], onDelete: Cascade)
-  
-  careerService   String?  @map("career_service")
-  rating          String?
-  dateOfExam      DateTime? @map("date_of_exam")
-  placeOfExam     String?  @map("place_of_exam")
-  licenseNumber   String?  @map("license_number")
-  validityDate    DateTime? @map("validity_date")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("eligibilities")
+  @@map("users")
 }
 
 // File 201 - 201 file management
 model File201 {
-  id        String   @id @default(uuid())
-  accountId String   @map("account_id")
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  
-  fileName      String   @map("file_name")
-  filePath      String   @map("file_path")
-  fileSize      Int      @map("file_size")
-  mimeType      String   @map("mime_type")
-  category      String?  // Keep for legacy compatibility
-  description   String?
-  
-  // New relation
-  categoryId    String?      @map("category_id")
-  fileCategory  FileCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  id        String  @id @default(uuid())
+  accountId String  @map("account_id")
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  uploadedBy    String?  @map("uploaded_by")
-  uploadedAt    DateTime @default(now()) @map("uploaded_at")
-  
+  fileName    String  @map("file_name")
+  filePath    String  @map("file_path")
+  fileSize    Int     @map("file_size")
+  mimeType    String  @map("mime_type")
+  category    String? // Keep for legacy compatibility
+  description String?
+
+  // New relation
+  categoryId   String?       @map("category_id")
+  fileCategory FileCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  uploadedBy String?  @map("uploaded_by")
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
   @@index([accountId])
   @@index([category])
   @@index([categoryId])
@@ -190,11 +121,10 @@ model FileCategory {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  files       File201[]
+  files File201[]
 
   @@map("file_categories")
 }
-
 
 // Layer 2: Refresh Tokens (long-lived, stored in DB for revocation)
 model RefreshToken {

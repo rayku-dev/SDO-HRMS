@@ -3,7 +3,13 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { files201Api, type File201 } from "@/lib/api/files201";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -26,22 +32,32 @@ import {
 } from "@/components/ui/dialog";
 import useSWR from "swr";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Files201ManagementPage() {
   const { user } = useAuth({ required: true });
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-
-  const { data: allFiles, mutate, isLoading } = useSWR<File201[]>(
-    "/files201/all",
-    files201Api.getAll,
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null,
   );
+
+  const {
+    data: allFiles,
+    mutate,
+    isLoading,
+  } = useSWR<File201[]>("/files201/all", files201Api.getAll);
 
   const { data: accountFiles } = useSWR<File201[]>(
     selectedAccountId ? `/files201/account/${selectedAccountId}` : null,
-    () => selectedAccountId ? files201Api.getByAccount(selectedAccountId) : [],
+    () =>
+      selectedAccountId ? files201Api.getByAccount(selectedAccountId) : [],
   );
 
   const handleDelete = useCallback(
@@ -63,7 +79,7 @@ export default function Files201ManagementPage() {
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   const getUserName = (file: File201) => {
@@ -85,9 +101,10 @@ export default function Files201ManagementPage() {
       file.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getUserName(file).toLowerCase().includes(searchQuery.toLowerCase()) ||
       file.account?.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesRole = roleFilter === "all" || file.account?.role === roleFilter;
-    
+
+    const matchesRole =
+      roleFilter === "all" || file.account?.role === roleFilter;
+
     return matchesSearch && matchesRole;
   });
 
@@ -140,7 +157,6 @@ export default function Files201ManagementPage() {
             <SelectItem value="HR">HR</SelectItem>
             <SelectItem value="EMPLOYEE">Employee</SelectItem>
             <SelectItem value="TEACHER">Teacher</SelectItem>
-            <SelectItem value="REGULAR">Regular</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -169,7 +185,9 @@ export default function Files201ManagementPage() {
               <TableBody>
                 {filteredFiles.map((file) => (
                   <TableRow key={file.id}>
-                    <TableCell className="font-medium">{file.fileName}</TableCell>
+                    <TableCell className="font-medium">
+                      {file.fileName}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{getUserName(file)}</div>
@@ -181,7 +199,11 @@ export default function Files201ManagementPage() {
                     <TableCell>
                       <Badge variant="outline">{file.account?.role}</Badge>
                     </TableCell>
-                    <TableCell>{file.category || (file as any).fileCategory?.name || "Uncategorized"}</TableCell>
+                    <TableCell>
+                      {file.category ||
+                        (file as any).fileCategory?.name ||
+                        "Uncategorized"}
+                    </TableCell>
                     <TableCell>{formatFileSize(file.fileSize)}</TableCell>
                     <TableCell>
                       {new Date(file.uploadedAt).toLocaleDateString()}
@@ -193,7 +215,9 @@ export default function Files201ManagementPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => setSelectedAccountId(file.accountId)}
+                              onClick={() =>
+                                setSelectedAccountId(file.accountId)
+                              }
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -202,7 +226,8 @@ export default function Files201ManagementPage() {
                             <DialogHeader>
                               <DialogTitle>User Files</DialogTitle>
                               <DialogDescription>
-                                Files for {getUserName(file)} ({file.account?.email})
+                                Files for {getUserName(file)} (
+                                {file.account?.email})
                               </DialogDescription>
                             </DialogHeader>
                             <UserFilesView accountId={file.accountId} />
@@ -212,12 +237,15 @@ export default function Files201ManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            files201Api.getFileBlobUrl(file.id)
+                            files201Api
+                              .getFileBlobUrl(file.id)
                               .then((url) => {
-                                window.open(url, '_blank');
+                                window.open(url, "_blank");
                               })
                               .catch((error) => {
-                                toast.error("File not found or cannot be viewed.");
+                                toast.error(
+                                  "File not found or cannot be viewed.",
+                                );
                               });
                           }}
                           title="View File"
@@ -227,7 +255,9 @@ export default function Files201ManagementPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => files201Api.download(file.id, file.fileName)}
+                          onClick={() =>
+                            files201Api.download(file.id, file.fileName)
+                          }
                           title="Download File"
                         >
                           <Download className="h-4 w-4" />
@@ -268,7 +298,7 @@ function UserFilesView({ accountId }: { accountId: string }) {
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   if (isLoading) {
@@ -276,7 +306,11 @@ function UserFilesView({ accountId }: { accountId: string }) {
   }
 
   if (!files || files.length === 0) {
-    return <div className="text-center py-4 text-muted-foreground">No files found.</div>;
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        No files found.
+      </div>
+    );
   }
 
   return (
@@ -287,9 +321,14 @@ function UserFilesView({ accountId }: { accountId: string }) {
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 border rounded-xl bg-card"
         >
           <div className="min-w-0 flex-1 pr-4">
-            <div className="font-medium truncate" title={file.fileName}>{file.fileName}</div>
+            <div className="font-medium truncate" title={file.fileName}>
+              {file.fileName}
+            </div>
             <div className="text-sm text-muted-foreground truncate">
-              {file.category || (file as any).fileCategory?.name || "Uncategorized"} • {formatFileSize(file.fileSize)}
+              {file.category ||
+                (file as any).fileCategory?.name ||
+                "Uncategorized"}{" "}
+              • {formatFileSize(file.fileSize)}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -300,9 +339,10 @@ function UserFilesView({ accountId }: { accountId: string }) {
               variant="outline"
               size="sm"
               onClick={() => {
-                files201Api.getFileBlobUrl(file.id)
+                files201Api
+                  .getFileBlobUrl(file.id)
                   .then((url) => {
-                    window.open(url, '_blank');
+                    window.open(url, "_blank");
                   })
                   .catch((error) => {
                     toast.error("File not found or cannot be viewed.");

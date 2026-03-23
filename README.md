@@ -88,6 +88,7 @@ npm run prisma:seed
 ```
 
 This creates:
+
 - **Admin**: `admin@example.com` / `Admin@123`
 - **User**: `user@example.com` / `User@123`
 
@@ -142,12 +143,8 @@ Navigate to `http://localhost:3000` to see the landing page.
 
 ### 2. Login with Test Accounts
 
-**Regular User:**
-- Email: `user@example.com`
-- Password: `User@123`
-- Access: User dashboard only
-
 **Admin User:**
+
 - Email: `admin@example.com`
 - Password: `Admin@123`
 - Access: User dashboard + Admin dashboard
@@ -155,17 +152,20 @@ Navigate to `http://localhost:3000` to see the landing page.
 ### 3. Test Features
 
 **Authentication Flow:**
+
 1. Login → Receives access token (stored in sessionStorage)
 2. Refresh token stored in httpOnly cookie
 3. On 401 error → Automatic token refresh
 4. Access protected routes
 
 **User Dashboard:**
+
 - View profile information
 - See account status
 - Access user-specific features
 
 **Admin Dashboard:**
+
 - View all users
 - See user statistics
 - Manage system (admin only)
@@ -240,6 +240,7 @@ GET    /api/users/sessions/active  - Get active sessions
 ## Database Schema
 
 ### Users Table
+
 - id (UUID)
 - email (unique)
 - password (hashed)
@@ -251,6 +252,7 @@ GET    /api/users/sessions/active  - Get active sessions
 - updatedAt
 
 ### Sessions Table
+
 - id (UUID)
 - userId (FK to users)
 - refreshToken (unique)
@@ -262,22 +264,26 @@ GET    /api/users/sessions/active  - Get active sessions
 ### Backend Issues
 
 **Database Connection Error:**
+
 - Verify PostgreSQL is running
 - Check DATABASE_URL in .env
 - Ensure database exists
 
 **Port Already in Use:**
+
 - Change PORT in backend/.env
 - Kill process using port 3001
 
 ### Frontend Issues
 
 **API Connection Error:**
+
 - Verify backend is running
 - Check NEXT_PUBLIC_API_URL in .env.local
 - Verify CORS settings in backend
 
 **Authentication Not Working:**
+
 - Clear browser cache and cookies
 - Check browser console for errors
 - Verify JWT secrets are set
@@ -285,11 +291,13 @@ GET    /api/users/sessions/active  - Get active sessions
 ### Common Problems
 
 **401 Unauthorized:**
+
 - Token expired (should auto-refresh)
 - Invalid credentials
 - User account inactive
 
 **403 Forbidden:**
+
 - Insufficient permissions
 - Wrong role for endpoint
 
@@ -326,12 +334,14 @@ GET    /api/users/sessions/active  - Get active sessions
 ## Development Tips
 
 **View Database:**
+
 ```bash
 cd backend
 npm run prisma:studio
 ```
 
 **Reset Database:**
+
 ```bash
 cd backend
 npm run prisma:migrate reset
@@ -339,6 +349,7 @@ npm run prisma:seed
 ```
 
 **Check Logs:**
+
 - Backend logs in terminal running NestJS
 - Frontend logs in browser console
 - API requests in Network tab
@@ -346,6 +357,7 @@ npm run prisma:seed
 ## Support
 
 For issues or questions:
+
 1. Check the README files in backend/ and frontend/
 2. Review the troubleshooting section
 3. Check backend logs for API errors

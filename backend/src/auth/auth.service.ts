@@ -82,17 +82,11 @@ export class AuthService {
         },
       });
 
-      // Create profile based on role if needed
+      // Create profile (User)
       if (firstName || lastName) {
-        const staffProfile = await this.prisma.staffProfile.create({
+        await this.prisma.user.create({
           data: {
             accountId: account.id,
-          },
-        });
-
-        await this.prisma.staffData.create({
-          data: {
-            staffProfileId: staffProfile.id,
             firstName: firstName || null,
             lastName: lastName || null,
           },
@@ -168,38 +162,18 @@ export class AuthService {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
       include: {
-        staffProfile: {
-          include: {
-            staffData: true,
-          },
-        },
-        schoolPersonnelProfile: {
-          include: {
-            schoolPersonnelData: true,
-          },
-        },
+        user: true,
       },
     });
 
-    if (!account) {
+    if (!account || !account.user) {
       return { firstName: null, lastName: null };
     }
 
-    if (account.staffProfile?.staffData) {
-      return {
-        firstName: account.staffProfile.staffData.firstName,
-        lastName: account.staffProfile.staffData.lastName,
-      };
-    }
-
-    if (account.schoolPersonnelProfile?.schoolPersonnelData) {
-      return {
-        firstName: account.schoolPersonnelProfile.schoolPersonnelData.firstName,
-        lastName: account.schoolPersonnelProfile.schoolPersonnelData.lastName,
-      };
-    }
-
-    return { firstName: null, lastName: null };
+    return {
+      firstName: account.user.firstName,
+      lastName: account.user.lastName,
+    };
   }
 
   async refreshTokens(refreshToken: string, userAgent?: string, ipAddress?: string) {

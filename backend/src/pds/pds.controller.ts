@@ -37,7 +37,10 @@ export class PdsController {
   @Post()
   create(@Body() createPdsDto: CreatePdsDto, @CurrentUser() user: User) {
     // Non-admin users can only create PDS for themselves
-    if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && createPdsDto.userId !== user.id) {
+    if (
+      !['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) &&
+      createPdsDto.userId !== user.id
+    ) {
       throw new ForbiddenException('You can only create PDS for yourself');
     }
     return this.pdsService.upsert(createPdsDto);
@@ -46,7 +49,10 @@ export class PdsController {
   @Post('upsert')
   async upsert(@Body() createPdsDto: CreatePdsDto, @CurrentUser() user: User) {
     // Non-admin users can only upsert PDS for themselves
-    if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && createPdsDto.userId !== user.id) {
+    if (
+      !['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) &&
+      createPdsDto.userId !== user.id
+    ) {
       throw new ForbiddenException('You can only update PDS for yourself');
     }
     try {
@@ -101,7 +107,10 @@ export class PdsController {
     @CurrentUser() user: User,
   ) {
     // Non-admin users can only generate PDF for their own PDS
-    if (!['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) && generatePdfDto.pdsData?.userId !== user.id) {
+    if (
+      !['ADMIN', 'HR_HEAD', 'HR_ASSOCIATE'].includes(user.role) &&
+      generatePdfDto.pdsData?.userId !== user.id
+    ) {
       throw new ForbiddenException('You can only generate PDF for your own PDS');
     }
     try {

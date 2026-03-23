@@ -35,24 +35,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const account = await this.prisma.account.findUnique({
       where: { id: payload.sub },
       include: {
-        staffProfile: {
-          include: {
-            staffData: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-        schoolPersonnelProfile: {
-          include: {
-            schoolPersonnelData: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
           },
         },
       },
@@ -62,21 +48,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Account not found or inactive');
     }
 
-    // Extract firstName and lastName from profile
-    const firstName =
-      account.staffProfile?.staffData?.firstName ||
-      account.schoolPersonnelProfile?.schoolPersonnelData?.firstName ||
-      null;
-    const lastName =
-      account.staffProfile?.staffData?.lastName ||
-      account.schoolPersonnelProfile?.schoolPersonnelData?.lastName ||
-      null;
-
     return {
       id: account.id,
       email: account.email,
-      firstName,
-      lastName,
+      firstName: account.user?.firstName || null,
+      lastName: account.user?.lastName || null,
       role: account.role,
       isActive: account.isActive,
     };

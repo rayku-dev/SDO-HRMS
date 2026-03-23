@@ -3,7 +3,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { CreatePdsDto } from './dto/create-pds.dto';
 import { UpdatePdsDto } from './dto/update-pds.dto';
 import { PDFService } from './pdf.service';
-import { populateSchoolPersonnelProfile, populateStaffProfile } from '@/lib/helpers/pds-extractors';
+import { populateUserProfile } from '@/lib/helpers/pds-extractors';
 
 @Injectable()
 export class PdsService {
@@ -99,30 +99,17 @@ export class PdsService {
   }
 
   /**
-   * Auto-populate profile based on account role
+   * Auto-populate profile based on PDS data
    */
-  private async autoPopulateProfile(accountId: string, role: string, pdsDto: CreatePdsDto) {
+  private async autoPopulateProfile(accountId: string, role: string, pdsData: any) {
     try {
-      if (role === 'SCHOOL_PERSONNEL') {
-        await populateSchoolPersonnelProfile(this.prisma, accountId, {
-          personalData: pdsDto.personalData,
-          civilServiceData: pdsDto.civilServiceData,
-        });
-      } else if (
-        [
-          'ADMIN',
-          'HR_ASSOCIATE',
-          'HR_HEAD',
-          'APPROVING_AUTHORITY',
-          'EMPLOYEE',
-          'UNIT_HEAD',
-        ].includes(role)
-      ) {
-        await populateStaffProfile(this.prisma, accountId, {
-          personalData: pdsDto.personalData,
-        });
-      }
-      // REGULAR role doesn't have a profile
+      // All roles except maybe REGULAR now use the unified User table
+      // We'll populate it for everyone who has a profile
+      await populateUserProfile(this.prisma, accountId, {
+        personalData: pdsData.personalData,
+        familyData: pdsData.familyData,
+        civilServiceData: pdsData.civilServiceData,
+      });
     } catch (error) {
       // Log error but don't fail PDS save
       console.error('Error auto-populating profile:', error);
@@ -146,24 +133,10 @@ export class PdsService {
       include: {
         account: {
           include: {
-            staffProfile: {
-              include: {
-                staffData: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
-              },
-            },
-            schoolPersonnelProfile: {
-              include: {
-                schoolPersonnelData: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
               },
             },
           },
@@ -176,18 +149,20 @@ export class PdsService {
 
     return pdsList.map((pds) => {
       const account = pds.account;
-      
-      // Try to get names from profiles first
-      let firstName = account.staffProfile?.staffData?.firstName || 
-                      account.schoolPersonnelProfile?.schoolPersonnelData?.firstName;
-      let lastName = account.staffProfile?.staffData?.lastName || 
-                     account.schoolPersonnelProfile?.schoolPersonnelData?.lastName;
+
+      // Try to get names from user profile first
+      let firstName = account.user?.firstName;
+      let lastName = account.user?.lastName;
 
       // Fallback to names in PDS personalData if profile names are missing
       if (!firstName && !lastName) {
         const personalData = pds.personalData as any;
         firstName = personalData?.firstName || personalData?.personalData?.firstName;
-        lastName = personalData?.lastName || personalData?.personalData?.lastName || personalData?.surname || personalData?.personalData?.surname;
+        lastName =
+          personalData?.lastName ||
+          personalData?.personalData?.lastName ||
+          personalData?.surname ||
+          personalData?.personalData?.surname;
       }
 
       return {
@@ -212,16 +187,25 @@ export class PdsService {
       throw new NotFoundException('PDS not found');
     }
 
-    return this.prisma.pds.update({
+    const updatedPds = await this.prisma.pds.update({
       where: { userId },
       data: {
         ...updatePdsDto,
         updatedAt: new Date(),
       },
     });
+
+    // Auto-populate profile after update
+    await this.autoPopulateProfile(userId, '', updatedPds);
+
+    return updatedPds;
   }
 
   async generatePdf(pdsData: Record<string, any>): Promise<Buffer> {
+    // If we have userId in the data, also update the profile
+    if (pdsData.userId) {
+      await this.autoPopulateProfile(pdsData.userId, '', pdsData);
+    }
     return this.pdfService.generateFilledPDF(pdsData);
   }
 
