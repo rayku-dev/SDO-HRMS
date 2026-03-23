@@ -30,17 +30,17 @@ import * as React from "react";
 const data = {
   teams: [
     {
-      name: "Riot Games",
+      name: "HRMS",
       logo: SiRiotgames,
       plan: "Enterprise",
     },
     {
-      name: "Rock Star",
+      name: "EPDS",
       logo: SiRockstargames,
       plan: "Startup",
     },
     {
-      name: "Nintendo",
+      name: "Recruitment",
       logo: SiNintendogamecube,
       plan: "Free",
     },

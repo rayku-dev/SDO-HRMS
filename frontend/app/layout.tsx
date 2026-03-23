@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Auth System - Secure JWT Authentication",
-  description: "Full-stack authentication system with Next.js and NestJS",
+  title: "HRMS",
+  description: "New HRMS",
 }
 
 import { Toaster } from "@/components/ui/sonner"
