@@ -25,19 +25,15 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div
-      className="dashboard-theme min-h-screen font-sans"
-      style={{ fontFamily: "var(--font-sans)" }}
-    >
-      <div className="dashboard-wrapper min-h-screen bg-background/50">
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset className="bg-transparent">
-            <Header />
-            <div className="flex flex-1 flex-col gap-6 p-6">{children}</div>
-          </SidebarInset>
-        </SidebarProvider>
-      </div>
-    </div>
+    <SidebarProvider className="flex min-h-svh bg-background transition-all duration-500">
+      <AppSidebar />
+      <SidebarInset className="relative overflow-hidden bg-background">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-transparent pointer-events-none" />
+        <Header />
+        <main className="flex-1 overflow-y-auto px-4 py-8 md:px-8 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-2 duration-700">
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
