@@ -43,6 +43,18 @@ export async function middleware(request: NextRequest) {
       const { payload: decoded } = await jose.jwtVerify(accessToken, secret);
 
       if (decoded && decoded.type === "access") {
+        // Enforce password change for new users
+        const hasChangedPassword = decoded.hasChangedPassword as boolean;
+        if (!hasChangedPassword && pathname !== "/change-password") {
+          console.log(`[Middleware] User has not changed temporary password, redirecting to /change-password`);
+          return NextResponse.redirect(new URL("/change-password", request.url));
+        }
+
+        // Prevent access to /change-password if already changed
+        if (hasChangedPassword && pathname === "/change-password") {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+
         // Role-based route protection
         if (pathname.startsWith("/admin") && decoded.role !== "ADMIN") {
           return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -117,5 +129,6 @@ export const config = {
     "/admin/:path*",
     "/pds/:path*",
     "/files201/:path*",
+    "/change-password",
   ],
 };

@@ -18,6 +18,7 @@ interface TokenPayload {
   email: string;
   role: string;
   sessionId: string;
+  hasChangedPassword: boolean;
   type: 'access' | 'refresh';
 }
 
@@ -156,6 +157,7 @@ export class AuthService {
         middleName: profile.middleName,
         nameExtension: profile.nameExtension,
         role: account.role,
+        hasChangedPassword: account.hasChangedPassword,
       },
       ...tokens,
       sessionToken,
@@ -233,6 +235,7 @@ export class AuthService {
           firstName: profile.firstName,
           lastName: profile.lastName,
           role: tokenRecord.account.role,
+          hasChangedPassword: tokenRecord.account.hasChangedPassword,
         },
         ...tokens,
       };
@@ -300,6 +303,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       sessionId,
+      hasChangedPassword: user.hasChangedPassword,
     };
 
     const [accessToken, refreshToken] = await Promise.all([

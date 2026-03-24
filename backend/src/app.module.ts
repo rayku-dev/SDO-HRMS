@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PdsModule } from './pds/pds.module';
 import { Files201Module } from './files201/files201.module';
+import { MailModule } from './mail/mail.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { LoggerMiddleware } from './middleware/logger.middleware';
@@ -29,6 +30,7 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
     UsersModule, // Manages user data (CRUD operations on users).
     PdsModule, // Manages Personal Data Sheet (PDS) operations.
     Files201Module, // Manages 201 file operations.
+    MailModule, // Handles sending emails.
   ],
   providers: [
     {

@@ -3,16 +3,21 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import * as bcryptjs from 'bcryptjs';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { MailService } from '@/mail/mail.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const { email, password, role, isActive, ...profileData } = createUserDto;
@@ -25,7 +30,7 @@ export class UsersService {
       throw new ConflictException('Email is already in use');
     }
 
-    const tempPassword = password || 'Welcome123!';
+    const tempPassword = password || this.generateTemporaryPassword();
     const hashedPassword = await bcryptjs.hash(tempPassword, 10);
     const employeeNumber = profileData.employeeNumber || (await this.generateEmployeeNumber());
 
@@ -43,7 +48,9 @@ export class UsersService {
               middleName: profileData.middleName || null,
               nameExtension: profileData.nameExtension || null,
               designation: profileData.designation || null,
-              appointmentDate: profileData.appointmentDate ? new Date(profileData.appointmentDate) : null,
+              appointmentDate: profileData.appointmentDate
+                ? new Date(profileData.appointmentDate)
+                : null,
               schedule: profileData.schedule || null,
               appointment: profileData.appointment || null,
               jobTitle: profileData.jobTitle || null,
@@ -59,6 +66,21 @@ export class UsersService {
 
       return account;
     });
+
+    // Send email with temporary password
+    try {
+      if (createdAccount) {
+        await this.mailService.sendTemporaryPassword(
+          email,
+          profileData.firstName,
+          tempPassword,
+          employeeNumber,
+        );
+      }
+    } catch (error) {
+      console.error(`[UsersService] Failed to send email to ${email}:`, error.message);
+      // We don't throw here as the account is already created, but we log the error
+    }
 
     const user = await this.findOne(createdAccount.id);
     return {
@@ -100,6 +122,15 @@ export class UsersService {
     return `${datePrefix}${sequence.toString().padStart(3, '0')}`;
   }
 
+  private generateTemporaryPassword(length = 10): string {
+    const charset = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  }
+
   async importUsers(users: any[]) {
     const results = {
       success: 0,
@@ -123,7 +154,7 @@ export class UsersService {
 
         await this.create({
           email: user.email,
-          password: user.password || 'Welcome123!',
+          password: user.password,
           firstName: user.firstName,
           lastName: user.lastName,
           middleName: user.middleName,
@@ -260,7 +291,9 @@ export class UsersService {
               middleName: updateUserDto.middleName,
               nameExtension: updateUserDto.nameExtension,
               designation: updateUserDto.designation,
-              appointmentDate: updateUserDto.appointmentDate ? new Date(updateUserDto.appointmentDate) : undefined,
+              appointmentDate: updateUserDto.appointmentDate
+                ? new Date(updateUserDto.appointmentDate)
+                : undefined,
               schedule: updateUserDto.schedule,
               appointment: updateUserDto.appointment,
               jobTitle: updateUserDto.jobTitle,
@@ -275,7 +308,9 @@ export class UsersService {
               middleName: updateUserDto.middleName || null,
               nameExtension: updateUserDto.nameExtension || null,
               designation: updateUserDto.designation || null,
-              appointmentDate: updateUserDto.appointmentDate ? new Date(updateUserDto.appointmentDate) : null,
+              appointmentDate: updateUserDto.appointmentDate
+                ? new Date(updateUserDto.appointmentDate)
+                : null,
               schedule: updateUserDto.schedule || null,
               appointment: updateUserDto.appointment || null,
               jobTitle: updateUserDto.jobTitle || null,
@@ -324,7 +359,10 @@ export class UsersService {
 
     await this.prisma.account.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        hasChangedPassword: true,
+      },
     });
 
     // Invalidate all sessions for security
@@ -347,5 +385,57 @@ export class UsersService {
         createdAt: 'desc',
       },
     });
+  }
+
+  async resendTemporaryPassword(id: string) {
+    const account = await this.prisma.account.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    const tempPassword = this.generateTemporaryPassword();
+    const hashedPassword = await bcryptjs.hash(tempPassword, 10);
+
+    await this.prisma.account.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+        hasChangedPassword: false,
+      },
+    });
+
+    // Invalidate all existing sessions and refresh tokens to ensure user must re-login
+    await Promise.all([
+      this.prisma.session.deleteMany({ where: { userId: id } }),
+      this.prisma.refreshToken.deleteMany({ where: { userId: id } }),
+    ]);
+
+    try {
+      await this.mailService.sendTemporaryPassword(
+        account.email,
+        account.user?.firstName || 'User',
+        tempPassword,
+        account.user?.employeeNumber || 'N/A',
+      );
+    } catch (error) {
+      console.error(
+        `[UsersService] Failed to resend email to ${account.email}:`,
+        error.message,
+      );
+      throw new InternalServerErrorException(
+        'Failed to send email. Password was reset but notification failed.',
+      );
+    }
+
+    return {
+      message: 'New temporary password has been sent to ' + account.email,
+      temporaryPassword: tempPassword,
+    };
   }
 }

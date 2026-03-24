@@ -132,4 +132,10 @@ export class UsersController {
   getSessions(@CurrentUser() user: SafeUser) {
     return this.usersService.getUserSessions(user.id);
   }
+
+  @Post(':id/resend-invite')
+  @Roles(Role.ADMIN)
+  resendInvite(@Param('id') id: string) {
+    return this.usersService.resendTemporaryPassword(id);
+  }
 }

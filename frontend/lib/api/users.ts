@@ -57,4 +57,9 @@ export const usersApi = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/users/${id}`);
   },
+  
+  resendInvite: async (id: string): Promise<{ message: string; temporaryPassword: string }> => {
+    const response = await api.post(`/users/${id}/resend-invite`);
+    return response.data;
+  },
 };
