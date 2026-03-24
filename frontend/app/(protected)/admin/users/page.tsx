@@ -49,6 +49,9 @@ import {
   Pencil,
   Edit,
   MailWarning,
+  UserX,
+  FileText,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Role } from "@/@types/auth";
@@ -60,6 +63,8 @@ export default function UserManagementPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [createdUserInfo, setCreatedUserInfo] = useState<{
@@ -285,19 +290,43 @@ export default function UserManagementPage() {
     fileInputRef.current?.click();
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    processFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
+  const processFile = async (file: File) => {
     try {
       setIsImporting(true);
-      toast.loading("Importing users...", { id: "import-toast" });
+      toast.loading("Processing system registry import...", {
+        id: "import-toast",
+      });
 
       const response = await usersApi.import(file);
 
       if (response.failed > 0) {
         toast.warning(
-          `Import partial: ${response.success} success, ${response.failed} failed`,
+          `Import partial: ${response.success} provisioned, ${response.failed} entries failed`,
           {
             id: "import-toast",
             duration: 5000,
@@ -305,9 +334,13 @@ export default function UserManagementPage() {
         );
         console.error("Import failures:", response.details);
       } else {
-        toast.success(`Successfully imported ${response.success} users!`, {
-          id: "import-toast",
-        });
+        toast.success(
+          `Successfully provisioned ${response.success} new identities!`,
+          {
+            id: "import-toast",
+          },
+        );
+        setIsImportDialogOpen(false);
       }
 
       mutate();
@@ -317,19 +350,22 @@ export default function UserManagementPage() {
       });
     } finally {
       setIsImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleDeleteUser = async (id: string, email: string) => {
-    if (!confirm(`Are you sure you want to delete user ${email}?`)) return;
+  const handleToggleUserStatus = async (id: string, email: string, currentStatus: boolean) => {
+    const action = currentStatus ? "suspend" : "activate";
+    if (!confirm(`Are you sure you want to ${action} account ${email}?`))
+      return;
 
     try {
-      await usersApi.delete(id);
-      toast.success("User deleted successfully");
+      await usersApi.delete(id); // Backend 'remove' now toggles status
+      toast.success(`Account ${action}ed successfully`);
       mutate();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete user");
+      toast.error(
+        error.response?.data?.message || `Failed to ${action} account`,
+      );
     }
   };
 
@@ -408,24 +444,121 @@ export default function UserManagementPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            variant="ghost"
-            className="h-12 px-6 rounded-xl hover:bg-white/5 border border-white/5"
-            onClick={downloadTemplate}
+          <Dialog
+            open={isImportDialogOpen}
+            onOpenChange={setIsImportDialogOpen}
           >
-            <Download className="mr-2 h-4 w-4" />
-            Template
-          </Button>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="border-primary/20 bg-primary/5 hover:bg-primary/10 h-12 px-6 rounded-xl"
+                disabled={isImporting}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {isImporting ? "Processing..." : "Bulk Registration"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border-white/10 bg-[#fdfdfd] dark:bg-[#1a1b1e] p-8 shadow-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-          <Button
-            variant="outline"
-            className="border-primary/20 bg-primary/5 hover:bg-primary/10 h-12 px-6 rounded-xl"
-            onClick={handleImportClick}
-            disabled={isImporting}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {isImporting ? "Processing..." : "Import Bulk (XLSX)"}
-          </Button>
+              <DialogHeader className="mb-6 relative">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-primary/10 rounded-xl">
+                    <Upload className="h-6 w-6 text-primary" />
+                  </div>
+                  <DialogTitle className="text-2xl font-bold tracking-tight">
+                    Bulk User Registration
+                  </DialogTitle>
+                </div>
+                <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
+                  Import multiple users at once using an XLSX or CSV file with
+                  the required column structure.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 relative">
+                {/* Template Card */}
+                <div className="flex items-center justify-between p-5 rounded-2xl bg-primary/[0.03] border border-primary/10 group hover:border-primary/20 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white dark:bg-white/5 rounded-xl shadow-sm border border-black/5 dark:border-white/5">
+                      <FileText className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground">
+                        XLSX Template
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium mt-0.5">
+                        Required Headers included
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary hover:text-primary hover:bg-primary/10 font-bold gap-2 pr-4 pl-3"
+                    onClick={downloadTemplate}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
+                </div>
+
+                {/* Drop Zone */}
+                <div
+                  className={`relative cursor-pointer group rounded-3xl border-2 border-dashed transition-all duration-300 min-h-[200px] flex flex-col items-center justify-center p-8 ${
+                    isDragActive
+                      ? "border-primary bg-primary/5 scale-[0.99]"
+                      : "border-muted-foreground/20 hover:border-primary/40 bg-white/50 dark:bg-black/20"
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div
+                    className={`p-4 rounded-3xl bg-background/50 mb-4 transition-transform duration-300 ${isDragActive ? "scale-110" : "group-hover:scale-110"}`}
+                  >
+                    <Upload className="h-10 w-10 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-1">
+                    Drop your CSV file here
+                  </h3>
+                  <p className="text-sm text-muted-foreground font-medium">
+                    or click to browse from device
+                  </p>
+                </div>
+
+                {/* Info Card */}
+                <div className="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 mb-4">
+                    Valid Role values (case-insensitive):
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {roles.map((role) => (
+                      <Badge
+                        key={role}
+                        variant="secondary"
+                        className="bg-white dark:bg-white/10 text-[10px] font-bold py-1 px-3 border-none ring-1 ring-black/5 dark:ring-white/5"
+                      >
+                        {role.replace(/_/g, " ")}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full h-14 rounded-2xl text-lg font-black shadow-lg shadow-primary/20 bg-[#FACC15] hover:bg-[#EAB308] text-black transition-all"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                >
+                  <Upload className="mr-3 h-5 w-5" />
+                  {isImporting
+                    ? "Provisioning Identites..."
+                    : "Import User Registry"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -1642,13 +1775,18 @@ export default function UserManagementPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-muted-foreground group-hover:text-destructive hover:bg-destructive/10 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                            className={`text-muted-foreground group-hover:opacity-100 transition-all rounded-lg opacity-0 ${u.isActive ? "group-hover:text-red-500 hover:bg-red-500/10" : "group-hover:text-emerald-500 hover:bg-emerald-500/10"}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteUser(u.id, u.email);
+                              handleToggleUserStatus(u.id, u.email, u.isActive);
                             }}
+                            title={u.isActive ? "Suspend Account" : "Activate Account"}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {u.isActive ? (
+                              <UserX className="h-4 w-4" />
+                            ) : (
+                              <UserCheck className="h-4 w-4" />
+                            )}
                           </Button>
                           <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                         </div>

@@ -334,9 +334,13 @@ export class UsersService {
       throw new NotFoundException('Account not found');
     }
 
-    await this.prisma.account.delete({ where: { id } });
+    const updated = await this.prisma.account.update({
+      where: { id },
+      data: { isActive: !account.isActive },
+    });
 
-    return { message: 'Account deleted successfully' };
+    const status = updated.isActive ? 'activated' : 'suspended';
+    return { message: `Account ${status} successfully` };
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
