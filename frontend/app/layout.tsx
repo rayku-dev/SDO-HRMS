@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 }
 
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/components/theme-provider"
 
 export default function RootLayout({
   children,
@@ -27,9 +28,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        {children}
-        <Toaster richColors/>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased dashboard-theme`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster richColors/>
+        </ThemeProvider>
       </body>
     </html>
   )
