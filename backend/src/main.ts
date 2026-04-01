@@ -27,41 +27,41 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule); // Creates the NestJS application instance. Loads your root AppModule (where all controllers, services, and modules are registered). Think of AppModule as the "wiring diagram" of your backend.
+  // Check if express app is already created
+  const app = await NestFactory.create<NestExpressApplication>(AppModule); 
 
-  // Serve static files for 201 file uploads
+  // Serve static files for 201 file uploads (Note: Local filesystem is read-only on Vercel)
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 
   // Security
-  app.use(helmet()); // Adds HTTP headers to protect against common web vulnerabilities (XSS, clickjacking, etc.).
-  app.use(cookieParser()); // Lets NestJS read cookies from incoming requests (needed for refresh tokens).
+  app.use(helmet()); 
+  app.use(cookieParser()); 
 
   // CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Allows your frontend (Next.js at localhost:3000) to talk to your backend (localhost:3001).
-    credentials: true, // Allows cookies (refresh tokens) to be sent across domains.
+    origin: process.env.FRONTEND_URL || '*', 
+    credentials: true, 
   });
 
   // Global prefix
-  app.setGlobalPrefix('api'); // Sets a global prefix for all routes (e.g., /api/users, /api/auth).
+  app.setGlobalPrefix('api'); 
 
   // Validation
   app.useGlobalPipes(
-    // Automatically validates DTOs (Data Transfer Objects) using class-validator
     new ValidationPipe({
-      whitelist: true, // Strips out any properties that are not defined in the DTOs.
-      forbidNonWhitelisted: false, // Allow extra properties for flexibility (PDS has many optional fields)
-      transform: true, // Automatically converts payloads to the correct types (e.g., strings to numbers).
+      whitelist: true, 
+      forbidNonWhitelisted: false, 
+      transform: true, 
       transformOptions: {
-        enableImplicitConversion: true, // Automatically convert types
+        enableImplicitConversion: true, 
       },
     }),
   );
 
   // Swagger setup
-  const config = new DocumentBuilder() // Builds the Swagger documentation configuration.
+  const config = new DocumentBuilder() 
     .setTitle('Project API')
     .setDescription('Authentication and Users endpoints with access & refresh tokens')
     .setVersion('1.0')
@@ -71,28 +71,37 @@ async function bootstrap() {
         scheme: 'bearer',
         bearerFormat: 'JWT',
         name: 'Authorization',
-        description: 'Paste your access token here, Access token stored in sessionStorage',
+        description: 'Paste your access token here',
         in: 'header',
       },
-      'access-token', // name for scheme
-    )
-    .addCookieAuth(
-      'refreshToken', // cookie name
-      {
-        type: 'apiKey',
-        in: 'cookie',
-        description: 'Paste your refresh token here. Refresh token stored in httpOnly cookie',
-      },
-      'refresh-token', // name for scheme
+      'access-token', 
     )
     .build();
 
-  const document = SwaggerModule.createDocument(app, config); // Generates the Swagger document based on the app's routes and the above config.
-  SwaggerModule.setup('api-docs', app, document); // Sets up the Swagger UI at /api-docs endpoint.
+  const document = SwaggerModule.createDocument(app, config); 
+  SwaggerModule.setup('api-docs', app, document); 
 
-  // Start the server
-  await app.listen(process.env.PORT || 3001);
-  console.log(`🚀 Application is running on: http://localhost:${process.env.PORT || 3001}/api`);
+  // If running in Vercel (serverless), we just init and return the underlying Express instance
+  if (process.env.VERCEL) {
+    await app.init();
+    return app.getHttpAdapter().getInstance();
+  } else {
+    // Start locally
+    await app.listen(process.env.PORT || 3001);
+    console.log(`🚀 Application is running on: http://localhost:${process.env.PORT || 3001}/api`);
+  }
 }
 
-bootstrap();
+// Vercel Serverless Function Handler
+let cachedServer: any;
+export default async function handler(req: any, res: any) {
+  if (!cachedServer) {
+    cachedServer = await bootstrap();
+  }
+  return cachedServer(req, res);
+}
+
+// Locally Boot
+if (!process.env.VERCEL) {
+  bootstrap();
+}
